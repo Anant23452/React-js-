@@ -1,8 +1,8 @@
-// immutalb vs mutable
-// array obj destructuring import and export;
-// map filter arrow function;
+ immutalb vs mutable
+ array obj destructuring import and export;
+ map filter arrow function;
 var obj={name:"anant",year:"21",email:"anantkpatel@gmail.com"};
 const{email}=obj;//ise mai email ko use kar sakta hu akele
-// mere ko bar bar
+ mere ko bar bar
 obj.email={changae@gmail.com};
-// nahi likhna hoga
+ nahi likhna hoga
