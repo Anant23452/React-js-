@@ -6,6 +6,7 @@ import About from "./Component/About";
 import Card from "./Component/Card";
 import Song from "./Component/Song";
 import State from "./Component/States";
+import States2 from "./Component/States2";
 
 
 //make function name in capital letter
@@ -22,7 +23,8 @@ function App(){
     </div> */}
     {/* <Card/> */}
     {/* <Song/>  */}
-    <State/>
+    {/* <State/>  */}
+    <States2/>
     </>
   );
 
