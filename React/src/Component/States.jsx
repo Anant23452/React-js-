@@ -19,7 +19,7 @@ function States() {
     banned ? "bg-red-500 text-white" : "bg-green-500 text-black"
   }`}
 >
-  Change
+  
 </button>
    
     
