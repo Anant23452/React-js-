@@ -2,7 +2,15 @@ import React, { useState } from 'react'
 
 function States2() {
   // const [val,setVal]=React.useState({name:"anant",age :24});
-  const [val,setVal]=useState(["anant","ajit","deepak","dileep","ankesh","monish","Abhisek","Anoop"]);
+
+  
+  // const [val,setVal]=useState(["anant","ajit","deepak","dileep","ankesh","monish","Abhisek","Anoop"]);
+
+  const [val,setVal]=useState([
+    {name:"anant",age:24},
+    {name:"ajit",age:25},
+    {name:"deepak",age:26},
+  ])
   return (
     <>
     {/* //use state state ko turant update nahi karta ,vo usestate state ko update karta hai apne hisaab se function completion ke badd to fix performace kssues */}
