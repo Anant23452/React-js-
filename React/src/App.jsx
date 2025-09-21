@@ -7,6 +7,7 @@ import Card from "./Component/Card";
 import Song from "./Component/Song";
 import State from "./Component/States";
 import States2 from "./Component/States2";
+import ImageCard from "./Component/ImageCard";
 
 
 //make function name in capital letter
@@ -24,7 +25,9 @@ function App(){
     {/* <Card/> */}
     {/* <Song/>  */}
     {/* <State/>  */}
-    <States2/>
+    {/* <States2/> */}
+    < ImageCard/>
+    
     </>
   );
 

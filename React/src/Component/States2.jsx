@@ -37,7 +37,7 @@ function States2() {
      
     
     </>
-  )
+  ) 
 }
 
 export default States2
