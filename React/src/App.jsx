@@ -8,6 +8,7 @@ import Song from "./Component/Song";
 import State from "./Component/States";
 import States2 from "./Component/States2";
 import ImageCard from "./Component/ImageCard";
+import Props from "./Component/Props";
 
 
 //make function name in capital letter
@@ -26,7 +27,9 @@ function App(){
     {/* <Song/>  */}
     {/* <State/>  */}
     {/* <States2/> */}
-    < ImageCard/>
+    {/* < ImageCard/> */}
+    <Props chacha="Know more" color="bg-blue-600"  />
+    <Props chacha="Download" color="bg-red-600" />
     
     </>
   );
