@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from "./Component/Navbar";
 import Hero from  "./Component/Hero";
 import About from "./Component/About";
@@ -22,7 +22,22 @@ function App(){
     {name:"Ajit",course:"BCA",image:"https://i.pinimg.com/736x/c8/96/dc/c896dc6b5f32dc59a75d4f8354e518db.jpg",freinds:false},
     {name:"Deepak",course:"B.Tech",image:"https://i.pinimg.com/736x/dd/cd/70/ddcd70b0982c7818456f8a62dfe740c8.jpg",freinds:false},
     {name:"Dileep",course:"MBA",image:"https://i.pinimg.com/736x/7a/46/c9/7a46c93d08199b4fd4a8dd5f17f1dc5a.jpg",freinds:false},
-  ]
+  ];
+  const [data,setData]=useState(app);
+
+  // data ko palatne ka function 
+  const handledata=(changingIndex)=>{
+    setData((prev)=>{
+      return prev.map((item,index)=>{
+        if(index===changingIndex){
+          return {...item,freinds:!item.freinds};
+        }
+        return item;
+      });
+    })
+  }
+
+  console.log(data);
   return (
     <>
     {/* <div>
@@ -41,8 +56,8 @@ function App(){
     <Props chacha="Download" color="bg-red-600" /> */}
     <div className="w-screen h-screen bg-zinc-400 flex gap-4 items-center justify-center">
  
-    {app.map((elem,index)=>(
-      <PropsPractice key={index} image={elem.image} course ={elem.course} name={elem.name} />
+    {data.map((elem,index)=>(
+      <PropsPractice key={index} index={index} handledata={handledata} values={elem} />
     ))}
     </div>
     
