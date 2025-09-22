@@ -10,7 +10,7 @@ function PropsPractice({values,index,handledata}) {
         <div className="w-full p-3 text-black">
           <h3>{values.name}</h3>
           <h3>{values.course} </h3>
-          <button onClick={()=> handledata(index)} className="mt-3 bg-blue-700 text-white">{values.friends===true?"Friends":"Add friends"}</button>
+          <button onClick={()=> handledata(index)} className="mt-3 bg-blue-700 text-white">{values.freinds===true?"Friends":"Add friends"}</button>
         </div>
       
     </div>
