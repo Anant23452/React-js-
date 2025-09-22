@@ -53,8 +53,10 @@ function App() {
       {/* < ImageCard/> */}
       {/* <Props chacha="Know more" color="bg-blue-600"  />
     <Props chacha="Download" color="bg-red-600" /> */}
+      <div className="w-screen h-screen bg-zinc-400">
+        <Navbar/>
     <ProjectOne/>
-      <div className="w-screen h-screen bg-zinc-400 flex gap-4 items-center justify-center">
+
         {/* {data.map((elem, index) => (
           <PropsPractice
             key={index}
