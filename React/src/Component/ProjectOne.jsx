@@ -1,6 +1,6 @@
 import React from 'react'
 
-function ProjectOne({data,handleclick}) {
+function ProjectOne({data,handleclick,index}) {
   // kya bahar nikalna hia 
   const{song,artist,image,added}=data;
   return (
@@ -12,7 +12,7 @@ function ProjectOne({data,handleclick}) {
           <h3 className='text-xl leading-none font-semibold'>{song} </h3>
           <h5>{artist} </h5>
         </div>
-        <button onClick={handleclick} className={`px-3 py-2 ${added===false?"bg-blue-600":"bg-green-600"} text-white-100 rounded-full text-xs absolute bottom-5  -translate-y-[-50%] -translate-x-[-50%]`}>{added==false?"Click to Favorite":"Remove from favorite"}</button>
+        <button onClick={()=>handleclick(index)} className={`px-3 py-2 ${added===false?"bg-blue-600":"bg-green-600"} text-white-100 rounded-full text-xs absolute bottom-5  -translate-y-[-50%] -translate-x-[-50%]`}>{added==false?"Click to Favorite":"Remove from favorite"}</button>
     </div>
   )
 }

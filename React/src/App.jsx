@@ -50,9 +50,17 @@ const data=[
 
 // Har samay data to state me dalo kyuki react only rect when state changes
 const [songs,setSongs]=useState(data);
-const handleclick=()=>{
-  console.log("clicked");
-  
+const handleclick=(index)=>{
+  console.log(index);
+  setSongs((prev)=>{
+    return prev.map((item, idx) => {
+      if(idx===index){
+        return{...item,added:!item.added};
+      }
+      return item;
+    });
+  })
+
 }
 
 
@@ -77,7 +85,7 @@ const handleclick=()=>{
         <div className="px-10 flex gap-3 mt-10 flex-wrap">
 
         {songs.map((elem,index)=>{
-          return  <ProjectOne data={elem}  key={index} handleclick={handleclick} /> 
+          return  <ProjectOne data={elem}  key={index} index={index} handleclick={handleclick} /> 
         })}
         </div>
 
