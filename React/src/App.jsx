@@ -48,6 +48,9 @@ const data=[
   {song:"Maan Meri Jaan",artist:"King",image:"https://i.pinimg.com/736x/d9/f0/67/d9f06726c045d37e0d144b1e2c7fbc73.jpg",added:false},
 ];
 
+// Har samay data to state me dalo kyuki react only rect when state changes
+const [songs,setSongs]=useState(data);
+
 
   return (
     <>
@@ -69,7 +72,9 @@ const data=[
         <Navbar/>
         <div className="px-10 flex gap-3 mt-10 flex-wrap">
 
-    <ProjectOne/>
+        {songs.map((elem,index)=>{
+          return  <ProjectOne data={elem}  key={index}/> 
+        })}
         </div>
 
         {/* {data.map((elem, index) => (
