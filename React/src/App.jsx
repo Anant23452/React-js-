@@ -22,6 +22,7 @@ function App() {
   //   {name:"Deepak",course:"B.Tech",image:"https://i.pinimg.com/736x/dd/cd/70/ddcd70b0982c7818456f8a62dfe740c8.jpg",freinds:false},
   //   {name:"Dileep",course:"MBA",image:"https://i.pinimg.com/736x/7a/46/c9/7a46c93d08199b4fd4a8dd5f17f1dc5a.jpg",freinds:false},
   // ];
+
   // const [data,setData]=useState(app);
 
   // data ko palatne ka function
@@ -37,6 +38,17 @@ function App() {
   // }
 
   // console.log(data);
+
+
+const data=[
+  {song:"Kesariya",artist:"Arijit Singh",image:"https://i.pinimg.com/1200x/de/51/34/de51343937840d07ca11216889a8d2ee.jpg",added:false},
+  {song:"Leja Re",artist:"Dhvani Bhand",image:"https://i.pinimg.com/1200x/78/34/55/7834559a5068156c195109f310372621.jpg",added:false},
+  {song:"Raatan Lambiyan",artist:"Tanishk Bagchi",image:"https://i.pinimg.com/1200x/41/c6/c9/41c6c97b52b01573a1b3a071cd6eb055.jpg",added:false},
+  {song:"Titliaan",artist:"Afsana Khan",image:"https://i.pinimg.com/736x/89/0d/51/890d51d786babc4a7c196f5b14d09ac4.jpg",added:false},
+  {song:"Maan Meri Jaan",artist:"King",image:"https://i.pinimg.com/736x/d9/f0/67/d9f06726c045d37e0d144b1e2c7fbc73.jpg",added:false},
+];
+
+
   return (
     <>
       {/* <div>
@@ -55,7 +67,10 @@ function App() {
     <Props chacha="Download" color="bg-red-600" /> */}
       <div className="w-screen h-screen bg-zinc-400">
         <Navbar/>
+        <div className="px-10 flex gap-3 mt-10 flex-wrap">
+
     <ProjectOne/>
+        </div>
 
         {/* {data.map((elem, index) => (
           <PropsPractice
