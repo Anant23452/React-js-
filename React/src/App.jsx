@@ -45,11 +45,15 @@ const data=[
   {song:"Leja Re",artist:"Dhvani Bhand",image:"https://i.pinimg.com/1200x/78/34/55/7834559a5068156c195109f310372621.jpg",added:false},
   {song:"Raatan Lambiyan",artist:"Tanishk Bagchi",image:"https://i.pinimg.com/1200x/41/c6/c9/41c6c97b52b01573a1b3a071cd6eb055.jpg",added:false},
   {song:"Titliaan",artist:"Afsana Khan",image:"https://i.pinimg.com/736x/89/0d/51/890d51d786babc4a7c196f5b14d09ac4.jpg",added:false},
-  {song:"Maan Meri Jaan",artist:"King",image:"https://i.pinimg.com/736x/d9/f0/67/d9f06726c045d37e0d144b1e2c7fbc73.jpg",added:false},
+  {song:"Maan Meri Jaan",artist:"King",image:"https://i.pinimg.com/736x/d9/f0/67/d9f06726c045d37e0d144b1e2c7fbc73.jpg",added:true},
 ];
 
 // Har samay data to state me dalo kyuki react only rect when state changes
 const [songs,setSongs]=useState(data);
+const handleclick=()=>{
+  console.log("clicked");
+  
+}
 
 
   return (
@@ -73,7 +77,7 @@ const [songs,setSongs]=useState(data);
         <div className="px-10 flex gap-3 mt-10 flex-wrap">
 
         {songs.map((elem,index)=>{
-          return  <ProjectOne data={elem}  key={index}/> 
+          return  <ProjectOne data={elem}  key={index} handleclick={handleclick} /> 
         })}
         </div>
 
