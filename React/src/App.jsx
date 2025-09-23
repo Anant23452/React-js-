@@ -81,7 +81,7 @@ const handleclick=(index)=>{
       {/* <Props chacha="Know more" color="bg-blue-600"  />
     <Props chacha="Download" color="bg-red-600" /> */}
       <div className="w-screen h-screen bg-zinc-400">
-        <Navbar/>
+        <Navbar index={songs.filter((song)=>song.added).length} />
         <div className="px-10 flex gap-3 mt-10 flex-wrap">
 
         {songs.map((elem,index)=>{
