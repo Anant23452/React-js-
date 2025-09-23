@@ -20,8 +20,9 @@ import React from 'react'
 
 function Form() {
   return (
-    <div className='bg-zinc-300 py-5 px-3'>
+    <div className='bg-zinc-300 py-5 px-3 flex flex-col gap-3 rounded-md'>
         <input type="Name" placeholder='name' />
+        <button>Submit</button>
     </div>
   )
 }
