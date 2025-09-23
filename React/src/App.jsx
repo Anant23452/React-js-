@@ -10,6 +10,7 @@ import ImageCard from "./Component/ImageCard";
 import Props from "./Component/Props";
 import PropsPractice from "./Component/PropsPractice";
 import ProjectOne from "./Component/ProjectOne";
+import Form from "./Component/Form";
 
 //make function name in capital letter
 function App() {
@@ -80,17 +81,17 @@ const handleclick=(index)=>{
       {/* < ImageCard/> */}
       {/* <Props chacha="Know more" color="bg-blue-600"  />
     <Props chacha="Download" color="bg-red-600" /> */}
-      <div className="w-screen h-screen bg-zinc-400">
+      <div className="w-screen h-screen bg-zinc-400 flex justify-center items-center">
         {/* Two method for same thing  */}
 
         {/* <Navbar index={songs.filter((song)=>song.added).length} /> */}
-        <Navbar data={songs} />2
+        {/* <Navbar data={songs} />2
         <div className="px-10 flex gap-3 mt-10 flex-wrap">
 
         {songs.map((elem,index)=>{
           return  <ProjectOne data={elem}  key={index} index={index} handleclick={handleclick} /> 
         })}
-        </div>
+        </div> */}
 
         {/* {data.map((elem, index) => (
           <PropsPractice
@@ -100,6 +101,18 @@ const handleclick=(index)=>{
             values={elem}
           />
         ))} */}
+
+          < Form />
+
+
+
+
+
+
+
+
+
+
       </div>
     </>
   );
