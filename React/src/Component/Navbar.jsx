@@ -1,4 +1,5 @@
 import React from 'react'
+import style from './style.module.css'
 function Navbar({data,index}){
     return(
         <div className="w-full py-3 px-4 flex justify-between items-center">
