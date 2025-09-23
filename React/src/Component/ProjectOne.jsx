@@ -8,7 +8,7 @@ function ProjectOne() {
           <h3 className='text-xl leading-none font-semibold'>Song name</h3>
           <h5>Artist name</h5>
         </div>
-        <button className="px-3 py-2 bg-blue-600 text-white-100 rounded-full text-xs absolute bottom-0 -translate-y-[-50%]">Click to Favorite</button>
+        <button className="px-3 py-2 bg-blue-600 text-white-100 rounded-full text-xs absolute bottom-5  -translate-y-[-50%] -translate-x-[-50%]">Click to Favorite</button>
     </div>
   )
 }
