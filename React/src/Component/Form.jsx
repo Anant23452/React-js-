@@ -21,12 +21,15 @@ import React, { useRef } from 'react'
 function Form() {
  const name = useRef(null);
  const age = useRef(null);
+ const handleSubmit =(event)=>{
+  event.preventDefault();
+  console.log(name.current.value,age.current.value);
+ }
   return (
     <div className='bg-zinc-300 py-5 px-3 flex flex-col gap-3 rounded-md'>
-      <form action="" onSubmit={(event)=>event.preventDefault()}>
-        <input type="Name" placeholder='name' />
-        <input type="Name" placeholder='age' />
-        <input type="Name" placeholder='email' />
+      <form action="" onSubmit={handleSubmit} className='flex flex-col gap-3'>
+        <input ref={name} type="text" placeholder='name' />
+        <input ref={age} type="text" placeholder='age' />
         <button>Submit</button>
         </form>
     </div>
