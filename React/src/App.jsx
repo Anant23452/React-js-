@@ -103,7 +103,7 @@ const handleclick=(index)=>{
           />
         ))} */}
 
-          < Form />
+          {/* < Form /> */}
           < FormTwo />
 
 
