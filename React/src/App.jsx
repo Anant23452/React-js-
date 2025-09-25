@@ -11,6 +11,7 @@ import Props from "./Component/Props";
 import PropsPractice from "./Component/PropsPractice";
 import ProjectOne from "./Component/ProjectOne";
 import Form from "./Component/Form";
+import FormTwo from "./Component/FormTwo";
 
 //make function name in capital letter
 function App() {
@@ -103,6 +104,7 @@ const handleclick=(index)=>{
         ))} */}
 
           < Form />
+          < FormTwo />
 
 
 
