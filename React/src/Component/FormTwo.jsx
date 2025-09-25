@@ -1,11 +1,15 @@
 import React, { useState } from 'react'
 
+
+
+
 function FormTwo() {
     const [val,setVal]=useState({name:"",email:""});
     const handleSubmit =(event)=>{
         event.preventDefault();
         console.log(val);
     }
+
   return (
     <form action="" onSubmit={handleSubmit} className='flex flex-col justify-center items-center bg-zinc-500'>
        < input onChange={(event)=>setVal({...val,name:event.target.value})} type="text" placeholder='Enter your name' className='m-3 p-2 rounded-md'/>
@@ -16,3 +20,4 @@ function FormTwo() {
 }
 
 export default FormTwo
+// Third way of making form is with react hook form library
