@@ -1,10 +1,11 @@
 import React from 'react'
-import Box from "./Component/Box";
+import Box from "./Box";
 
 function Boxes() {
   return (
-    <div className='w-full h-[50vh] bg-blue-500 '>
+    <div className='w-full max-h-72 overflow-auto bg-blue-500 p-5 flex gap-4 justify-center flex-wrap '>
         <Box/>
+      
     </div>
   )
 }
