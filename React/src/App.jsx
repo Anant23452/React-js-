@@ -69,7 +69,7 @@ const handleclick=(index)=>{
 
 
 
-const [user,Setuser]=useState([]);
+const [users,Setuser]=useState([]);
 
   return (
     <>
