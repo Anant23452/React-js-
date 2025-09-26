@@ -68,6 +68,8 @@ const handleclick=(index)=>{
 }
 
 
+const [user,Setuser]=useState([]);
+
   return (
     <>
       {/* <div>
@@ -111,8 +113,9 @@ const handleclick=(index)=>{
 
           {/* making project 
            */}
+
            <div className="container mx-auto">
-            <Boxes  />
+            <Boxes users={users}  />
             <Page />
 
            </div>
