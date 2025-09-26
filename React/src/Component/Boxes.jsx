@@ -4,8 +4,9 @@ import Box from "./Box";
 function Boxes({users}) {
   return (
     <div className='w-full h-96 max-h-72 overflow-auto  p-5 flex gap-4 justify-center flex-wrap '>
-        <Box users={users} />
-      
+        {users.map((elem,index)=>{
+            return <Box  key={index} />
+        })}
     </div>
   )
 }
