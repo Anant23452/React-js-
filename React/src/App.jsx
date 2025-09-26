@@ -12,6 +12,8 @@ import PropsPractice from "./Component/PropsPractice";
 import ProjectOne from "./Component/ProjectOne";
 import Form from "./Component/Form";
 import FormTwo from "./Component/FormTwo";
+import Boxes from "./Component/Boxes";
+import Page from "./Component/Page";
 
 //make function name in capital letter
 function App() {
@@ -109,7 +111,11 @@ const handleclick=(index)=>{
 
           {/* making project 
            */}
-           <div className="container mx-auto"></div>
+           <div className="container mx-auto">
+            <Boxes  />
+            <Page />
+
+           </div>
 
 
 
