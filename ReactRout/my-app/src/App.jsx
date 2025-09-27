@@ -8,9 +8,9 @@ function App() {
 
   return (
     <>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+     <div className="bg-blue-500 text-white text-3xl font-bold p-10">
+      TailwindCSS is working 🎉
+    </div>
     </>
   )
 }
