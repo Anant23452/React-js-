@@ -1,16 +1,28 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import Home from '../Components/Home'
+import User from '../Components/User'
+import About from '../Components/About'
+
 
 function App() {
 
 
   return (
     <>
-     <div className="bg-blue-500 text-white text-3xl font-bold p-10">
-      TailwindCSS is working 🎉
-    </div>
+  
+
+    <Routes>
+    <Route path='/' element={<Home/>}></Route>
+    <Route path='/user' element={<User/>}></Route>
+    <Route path='/about' element={<About/>}></Route>
+
+
+    </Routes>
+   
+    
+
     </>
   )
 }
