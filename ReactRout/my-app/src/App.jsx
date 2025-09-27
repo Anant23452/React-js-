@@ -4,16 +4,16 @@ import Nav from '../Components/Nav';
 import  Routing from '../utils/Routing';
 import axios from 'axios';
 
-const [products,setProducts]=useState([])
 function App() {
+  const [products,setProducts]=useState([])
   //Api Handling 
   const getproducts=()=>{
     const api ="https://fakestoreapi.com/products";
 
 
-    axios.get(api).then((product)=>{
-      console.log(product);
-      setProducts(product.data)
+    axios.get(api).then((products)=>{
+      console.log(products);
+      setProducts(products.data)
     })
     .catch((err)=>{
       console.log(err);
@@ -55,10 +55,11 @@ console.log(products);
    {
     products.length>0 ?(
       products.map((p)=>(
-        <li key={p.id} className='m-5 p-5 border-2 border-blue-400 rounded-lg shadow-lg'>
-          </li>
-      ))
+        <li key={p.id} className='m-5 p-5 border-2  border-blue-400 rounded-lg shadow-lg'>
+         {p.title} </li>
+      )
     )
+    ):<h1 className='text-center text-3xl font-bold'>No Products</h1>
   
    }
   </ul>
