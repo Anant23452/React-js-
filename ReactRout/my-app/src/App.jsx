@@ -45,10 +45,16 @@ function App() {
 
   <Nav/>
   <Routing/>
-  <div className="pt-5 bg-blue-500 ">
+  <div className="pt-5 bg-blue-500 flex gap-5 justify-center"> 
     <button onClick={getproducts}className='rounded px-5 py-2 bg-red-400' >Click for get product</button>
     <button onClick={addproducts}className='rounded px-5 py-2 bg-red-400' >Click for add product</button>
   </div>
+  <hr className="w-full h-1 my-8 bg-gray-200 border-0 rounded-sm dark:bg-gray-700" />
+  <ul>
+    <li></li>
+    <li></li>
+    <li></li>
+  </ul>
 
     
 
