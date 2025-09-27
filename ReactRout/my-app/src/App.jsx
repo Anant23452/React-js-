@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import Nav from '../Components/Nav';
 import  Routing from '../utils/Routing';
@@ -6,7 +6,16 @@ import axios from 'axios';
 
 function App() {
   const [products,setProducts]=useState([])
+
+  ///useEffect
+
+   useEffect(()=>{
+    getproducts();
+   },[])
+
+
   //Api Handling 
+
   const getproducts=()=>{
     const api ="https://fakestoreapi.com/products";
 
