@@ -7,7 +7,8 @@ import axios from 'axios';
 function App() {
   const [products,setProducts]=useState([])
 
-  ///useEffect
+  ///useEffect- ise get product me jitna bhi hai vo home page pr load hote hi show kr dega
+  
 
    useEffect(()=>{
     getproducts();
