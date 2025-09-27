@@ -4,7 +4,7 @@ import Nav from '../Components/Nav';
 import  Routing from '../utils/Routing';
 import axios from 'axios';
 
-
+const [products,setProducts]=useState([])
 function App() {
   //Api Handling 
   const getproducts=()=>{
@@ -13,6 +13,7 @@ function App() {
 
     axios.get(api).then((product)=>{
       console.log(product);
+      setProducts(product.data)
     })
     .catch((err)=>{
       console.log(err);
@@ -39,7 +40,7 @@ function App() {
     })
   }
 
-
+console.log(products);
   return (
     <>
 
@@ -51,9 +52,15 @@ function App() {
   </div>
   <hr className="w-full h-1 my-8 bg-gray-200 border-0 rounded-sm dark:bg-gray-700" />
   <ul>
-    <li></li>
-    <li></li>
-    <li></li>
+   {
+    products.length>0 ?(
+      products.map((p)=>(
+        <li key={p.id} className='m-5 p-5 border-2 border-blue-400 rounded-lg shadow-lg'>
+          </li>
+      ))
+    )
+  
+   }
   </ul>
 
     
