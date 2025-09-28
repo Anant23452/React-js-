@@ -11,7 +11,7 @@ function Context(props) {
    const UserContext=React.createContext();
     
     console.log(props);
-  return <UserContext.Provider value={{users,setUser}}>  { props.children}  </UserContext.Provider>
+  return <UserContext.Provider value={{user,setUser}}>  { props.children}  </UserContext.Provider>
    
   
 }
