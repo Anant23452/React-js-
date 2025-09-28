@@ -3,12 +3,13 @@ import './App.css'
 import Nav from '../Components/Nav';
 import  Routing from '../utils/Routing';
 import axios from 'axios';
+import Axios from '../utils/Axios';
 
 function App() {
   const [products,setProducts]=useState([])
 
   ///useEffect- ise get product me jitna bhi hai vo home page pr load hote hi show kr dega
-  
+
 
    useEffect(()=>{
     getproducts();
