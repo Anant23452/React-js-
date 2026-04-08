@@ -481,4 +481,276 @@ const [count, setCount] = useState(0);
 
 ---
 
+We already crushed Topic 01 just above! 🎯 You've got `let/const`, arrow functions, destructuring, spread/rest, template literals, and short-circuit operators covered.
+
+Let's keep the momentum and jump straight into **Topic 02 — Array Methods.** These are the backbone of rendering lists and managing data in React.
+
+---
+
+# Topic 02 — Array Methods
+
+## First principle: Why does React care so much about these?
+
+In React, your UI is a function of your data. You have an array of users → you render a list of cards. You have an array of products → you filter, sort, display. **You never write `for` loops in React JSX.** Array methods are how you transform data into UI — cleanly, in one line.
+
+---
+
+## 1. `.map()` — Transform every item
+
+Takes every item, runs a function on it, returns a **new array** of the same length.
+
+```js
+const numbers = [1, 2, 3, 4];
+
+const doubled = numbers.map(n => n * 2);
+// [2, 4, 6, 8]
+
+// Original is UNTOUCHED
+console.log(numbers); // [1, 2, 3, 4]
+```
+
+**Real React use — rendering a list:**
+
+```jsx
+const users = [
+  { id: 1, name: "Ali", role: "Admin" },
+  { id: 2, name: "Sara", role: "Editor" },
+  { id: 3, name: "Ravi", role: "Viewer" },
+];
+
+const UserList = () => {
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id}>
+          {user.name} — {user.role}
+        </li>
+      ))}
+    </ul>
+  );
+};
+```
+
+The `key` prop is required — React uses it to track which item changed. Always use a unique ID, never the array index (unless you have no choice).
+
+---
+
+## 2. `.filter()` — Keep only matching items
+
+Returns a **new array** with only the items where the function returns `true`.
+
+```js
+const numbers = [1, 2, 3, 4, 5, 6];
+
+const evens = numbers.filter(n => n % 2 === 0);
+// [2, 4, 6]
+
+const users = [
+  { name: "Ali",  active: true  },
+  { name: "Sara", active: false },
+  { name: "Ravi", active: true  },
+];
+
+const activeUsers = users.filter(user => user.active);
+// [{ name: "Ali", active: true }, { name: "Ravi", active: true }]
+```
+
+**Real React use — deleting an item from state:**
+
+```jsx
+const [todos, setTodos] = useState([
+  { id: 1, text: "Learn React" },
+  { id: 2, text: "Build project" },
+  { id: 3, text: "Get job" },
+]);
+
+const deleteTodo = (id) => {
+  // Keep everything EXCEPT the one with this id
+  setTodos(todos.filter(todo => todo.id !== id));
+};
+
+return (
+  <ul>
+    {todos.map(todo => (
+      <li key={todo.id}>
+        {todo.text}
+        <button onClick={() => deleteTodo(todo.id)}>Delete</button>
+      </li>
+    ))}
+  </ul>
+);
+```
+
+No splice, no index juggling. One line removes an item from state.
+
+---
+
+## 3. `.reduce()` — Collapse an array into one value
+
+The most powerful — and most misunderstood — method. It takes every item and "accumulates" them into a single result (a number, object, array, anything).
+
+```js
+// Signature: array.reduce((accumulator, currentItem) => ..., initialValue)
+
+const numbers = [1, 2, 3, 4, 5];
+
+const sum = numbers.reduce((acc, n) => acc + n, 0);
+// Step 1: acc=0,  n=1 → 1
+// Step 2: acc=1,  n=2 → 3
+// Step 3: acc=3,  n=3 → 6
+// Step 4: acc=6,  n=4 → 10
+// Step 5: acc=10, n=5 → 15
+console.log(sum); // 15
+```
+
+**Reducing to an object — very common in real apps:**
+
+```js
+const cart = [
+  { id: 1, item: "Phone",  price: 30000 },
+  { id: 2, item: "Case",   price: 500   },
+  { id: 3, item: "Charger",price: 1200  },
+];
+
+// Total price
+const total = cart.reduce((acc, product) => acc + product.price, 0);
+// 31700
+
+// Group by category
+const people = [
+  { name: "Ali",  dept: "Engineering" },
+  { name: "Sara", dept: "Design"      },
+  { name: "Ravi", dept: "Engineering" },
+];
+
+const grouped = people.reduce((acc, person) => {
+  const dept = person.dept;
+  if (!acc[dept]) acc[dept] = [];
+  acc[dept].push(person);
+  return acc;
+}, {});
+
+// {
+//   Engineering: [{ name: "Ali"... }, { name: "Ravi"... }],
+//   Design:      [{ name: "Sara"... }]
+// }
+```
+
+---
+
+## 4. `.find()` — Get the first match
+
+Returns the **item itself** (not an array). Returns `undefined` if nothing found.
+
+```js
+const users = [
+  { id: 1, name: "Ali"  },
+  { id: 2, name: "Sara" },
+  { id: 3, name: "Ravi" },
+];
+
+const user = users.find(u => u.id === 2);
+// { id: 2, name: "Sara" }
+
+const missing = users.find(u => u.id === 99);
+// undefined
+```
+
+**React use — find and edit an item in state:**
+
+```jsx
+const editTodo = (id, newText) => {
+  setTodos(todos.map(todo =>
+    todo.id === id
+      ? { ...todo, text: newText }  // spread + override the matching one
+      : todo                         // leave the rest untouched
+  ));
+};
+```
+
+This pattern — `map` + `spread` + ternary — is the standard way to update one item in a state array. Memorize it.
+
+---
+
+## 5. `.some()` and `.every()`
+
+```js
+const ages = [22, 17, 25, 30];
+
+// some — is at least ONE item true?
+const hasMinor = ages.some(age => age < 18);   // true
+
+// every — are ALL items true?
+const allAdults = ages.every(age => age >= 18); // false
+
+// React use
+const allTodosComplete = todos.every(todo => todo.done);
+{allTodosComplete && <p>All done! 🎉</p>}
+
+const hasUnsavedChanges = fields.some(field => field.dirty);
+<button disabled={!hasUnsavedChanges}>Save</button>
+```
+
+---
+
+## 6. Chaining methods — The real power
+
+Methods return new arrays, so you can chain them:
+
+```js
+const products = [
+  { name: "Phone",  price: 30000, inStock: true  },
+  { name: "TV",     price: 50000, inStock: false },
+  { name: "Laptop", price: 70000, inStock: true  },
+  { name: "Tablet", price: 25000, inStock: true  },
+];
+
+// Get names of in-stock products under ₹40,000
+const result = products
+  .filter(p => p.inStock)
+  .filter(p => p.price < 40000)
+  .map(p => p.name);
+
+// ["Phone", "Tablet"]
+```
+
+This is exactly how you'd build a search + filter feature in React.
+
+---
+
+## The mental model — never mutate, always return new
+
+| Method | Input | Returns | Mutates original? |
+|---|---|---|---|
+| `.map()` | array | new array (same length) | No |
+| `.filter()` | array | new array (shorter) | No |
+| `.reduce()` | array | single value (any type) | No |
+| `.find()` | array | single item or undefined | No |
+| `.some()` | array | boolean | No |
+| `.every()` | array | boolean | No |
+
+**None of them mutate the original.** This is perfect for React — state should never be mutated directly.
+
+---
+
+## Interview Questions
+
+**Q: Why use `.map()` instead of `forEach` in React JSX?**
+`forEach` returns `undefined` — you can't use it inside JSX. `.map()` returns a new array of JSX elements, which React can render. Always `.map()` in JSX.
+
+**Q: How do you update one item in a state array?**
+`.map()` + spread + ternary: `items.map(item => item.id === id ? { ...item, updated: true } : item)`. This creates a new array with the matching item replaced — React detects the new reference and re-renders.
+
+**Q: How do you delete an item from a state array?**
+`.filter()`: `items.filter(item => item.id !== id)`. Returns everything except the deleted item.
+
+**Q: What's the difference between `.find()` and `.filter()`?**
+`.filter()` returns an array of all matches. `.find()` returns the first matching item itself. If you need one specific item (like finding a user by ID), use `.find()`.
+
+---
+
+**Topics 01 and 02 done.** You now know the JS that makes up ~70% of all React code you'll ever write.
+
+Next up — **Topic 03: Modules (import/export).** This is how every React file talks to every other file. Short but essential. Ready? Just say **"next"**.
+
 
