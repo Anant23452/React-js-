@@ -748,9 +748,221 @@ This is exactly how you'd build a search + filter feature in React.
 `.filter()` returns an array of all matches. `.find()` returns the first matching item itself. If you need one specific item (like finding a user by ID), use `.find()`.
 
 ---
+# Topic 03 — Modules (import / export)
 
-**Topics 01 and 02 done.** You now know the JS that makes up ~70% of all React code you'll ever write.
+## First principle: Why do modules exist?
 
-Next up — **Topic 03: Modules (import/export).** This is how every React file talks to every other file. Short but essential. Ready? Just say **"next"**.
+Before modules, all JavaScript lived in one file or leaked into a global scope — variables from one file could clash with another. Modules give every file its **own private scope**. You explicitly choose what to share (`export`) and what to use from other files (`import`).
 
+In React, **every component is its own file, every utility is its own file** — modules are how they connect.
 
+---
+
+## Two types of exports — Named and Default
+
+### Default Export — one main thing per file
+
+```js
+// UserCard.jsx — only ONE default export per file
+const UserCard = ({ name, age }) => {
+  return <div>{name} — {age}</div>;
+};
+
+export default UserCard;
+```
+
+```js
+// Importing a default export — you name it whatever you want
+import UserCard from "./UserCard";
+import Card from "./UserCard";      // same thing, different name — valid
+import Whatever from "./UserCard";  // still works — name is up to you
+```
+
+---
+
+### Named Export — multiple things from one file
+
+```js
+// utils.js — multiple named exports
+export const add = (a, b) => a + b;
+export const subtract = (a, b) => a - b;
+export const multiply = (a, b) => a * b;
+
+export const PI = 3.14159;
+```
+
+```js
+// Importing named exports — name MUST match exactly
+import { add, subtract } from "./utils";
+import { add, PI } from "./utils";       // pick only what you need
+
+// Rename on import using "as"
+import { add as sum } from "./utils";
+sum(2, 3); // 5
+```
+
+---
+
+### Default + Named together — very common in React
+
+```js
+// Button.jsx
+const Button = ({ label, onClick }) => (
+  <button onClick={onClick}>{label}</button>
+);
+
+export const BUTTON_SIZES = { sm: "small", md: "medium", lg: "large" };
+export const BUTTON_VARIANTS = ["primary", "secondary", "ghost"];
+
+export default Button;  // one default
+// + two named exports from the same file
+```
+
+```js
+import Button, { BUTTON_SIZES, BUTTON_VARIANTS } from "./Button";
+//     ^default   ^named exports
+```
+
+---
+
+## Re-exports — the index.js pattern
+
+In real projects you'll have a folder of components. Instead of importing from deep paths everywhere, you create an `index.js` that re-exports everything:
+
+```
+components/
+  Button.jsx
+  Input.jsx
+  Modal.jsx
+  index.js      ← barrel file
+```
+
+```js
+// components/index.js — re-export everything
+export { default as Button } from "./Button";
+export { default as Input }  from "./Input";
+export { default as Modal }  from "./Modal";
+```
+
+```js
+// Now anywhere in your app — clean single import
+import { Button, Input, Modal } from "./components";
+
+// Instead of this mess
+import Button from "./components/Button";
+import Input  from "./components/Input";
+import Modal  from "./components/Modal";
+```
+
+This pattern is called a **barrel file** — you'll see it in every professional React project.
+
+---
+
+## Import aliases — for deep paths
+
+In large projects, relative imports get ugly:
+
+```js
+import Button from "../../../components/Button";  // horrible
+```
+
+Most React setups (Vite, Next.js, CRA) let you configure path aliases:
+
+```js
+// vite.config.js
+import { defineConfig } from "vite";
+import path from "path";
+
+export default defineConfig({
+  resolve: {
+    alias: { "@": path.resolve(__dirname, "./src") }
+  }
+});
+```
+
+```js
+// Now anywhere in your app
+import Button from "@/components/Button";  // clean, absolute-style
+import { useAuth } from "@/hooks/useAuth";
+```
+
+---
+
+## How React uses modules — the full picture
+
+```
+src/
+  components/
+    Button.jsx         ← export default Button
+    UserCard.jsx       ← export default UserCard
+    index.js           ← barrel file
+  hooks/
+    useAuth.js         ← export const useAuth = ...
+    useFetch.js        ← export const useFetch = ...
+  utils/
+    formatDate.js      ← export const formatDate = ...
+    validators.js      ← export const isEmail, isPhone...
+  pages/
+    Home.jsx
+    Profile.jsx
+  App.jsx
+  main.jsx             ← entry point
+```
+
+```jsx
+// App.jsx — pulling everything together
+import { Button, UserCard } from "@/components";
+import { useAuth } from "@/hooks/useAuth";
+import { formatDate } from "@/utils/formatDate";
+
+const App = () => {
+  const { user } = useAuth();
+  return (
+    <div>
+      <UserCard name={user.name} joined={formatDate(user.createdAt)} />
+      <Button label="Logout" onClick={() => {}} />
+    </div>
+  );
+};
+
+export default App;
+```
+
+Every single line here is just imports. You already understand all of it.
+
+---
+
+## Common mistakes
+
+```js
+// MISTAKE 1 — importing default with curly braces
+import { UserCard } from "./UserCard";  // wrong if it's a default export
+import UserCard from "./UserCard";       // correct
+
+// MISTAKE 2 — wrong file path
+import Button from "./button";  // case-sensitive on Linux/Mac — will fail
+import Button from "./Button";  // correct
+
+// MISTAKE 3 — forgetting to export
+const helper = () => {};        // no export keyword — can't be imported
+export const helper = () => {}; // correct
+
+// MISTAKE 4 — two default exports (syntax error)
+export default ComponentA;
+export default ComponentB; // SyntaxError — only one default allowed
+```
+
+---
+
+## Interview Questions
+
+**Q: What's the difference between default and named exports?**
+A file can have only one default export but multiple named exports. Default imports can be renamed freely on import; named imports must match exactly (or use `as` to rename). Use default for the main thing a file exports (usually a component), named for utilities or constants.
+
+**Q: What is a barrel file / index.js pattern?**
+A file that re-exports from multiple files in a folder, so consumers can import from one clean path instead of deep individual paths. Common in component libraries and hooks folders.
+
+**Q: Why does React use one component per file?**
+Modules give each file its own scope — no naming conflicts. It also makes code splitting possible: bundlers like Vite can load only the modules actually used, keeping bundle size small.
+
+---
