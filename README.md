@@ -8,5 +8,6 @@ const [count, setCount] = useState(0);
 - Item 2
 - [Visit React](https://react.dev)
 
-- ![diagram](./images/useState.png)
+- ![diagram](./images/image.png)
 
+- **Bold Text**
