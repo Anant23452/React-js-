@@ -749,8 +749,5 @@ This is exactly how you'd build a search + filter feature in React.
 
 ---
 
-**Topics 01 and 02 done.** You now know the JS that makes up ~70% of all React code you'll ever write.
-
-Next up — **Topic 03: Modules (import/export).** This is how every React file talks to every other file. Short but essential. Ready? Just say **"next"**.
 
 
