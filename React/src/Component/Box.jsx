@@ -1,7 +1,7 @@
 import React from 'react'
 
 
-function Box({users}) {
+function Box({users,}) {
   return (
  <>
  {users.map((elem,index)=>{
