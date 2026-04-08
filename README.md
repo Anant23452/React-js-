@@ -750,9 +750,12 @@ This is exactly how you'd build a search + filter feature in React.
 ---
 # Topic 03 — Modules (import / export)
 
+<<<<<<< HEAD
 ## First principle: Why do modules exist?
 
 Before modules, all JavaScript lived in one file or leaked into a global scope — variables from one file could clash with another. Modules give every file its **own private scope**. You explicitly choose what to share (`export`) and what to use from other files (`import`).
+=======
+>>>>>>> 57fe74eb8a62ce50de28ac472fda9594c4fc814e
 
 In React, **every component is its own file, every utility is its own file** — modules are how they connect.
 
