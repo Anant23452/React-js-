@@ -1903,6 +1903,4 @@ A Single Page Application loads once and React manages all navigation and update
 
 ---
 
-**Topic 06 done.** You now understand WHY React exists and HOW it works under the hood. This context makes everything else — hooks, state, rendering — make complete sense.
 
-**Topic 07 — JSX.** The syntax you write React in — what it actually is, how it compiles, and all the rules. Say **"next"** to continue.
