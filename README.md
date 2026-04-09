@@ -1295,5 +1295,321 @@ No — this is a classic gotcha. `fetch()` only rejects on network errors (no in
 If the component unmounts before the fetch completes, it tries to call `setState` on an unmounted component — causing a memory leak and a React warning. The fix is `AbortController` — you abort the request in the `useEffect` cleanup function.
 
 ---
+# Topic 05 — Object Methods
+
+## First principle: Why do you need these?
+
+APIs return objects. State is often an object. Config is an object. You constantly need to loop over objects, transform them, merge them, copy them. JavaScript doesn't have `.map()` or `.filter()` directly on objects — these methods are how you work with objects the way you work with arrays.
+
+---
+
+## 1. `Object.keys()` — Get all the keys
+
+```js
+const user = {
+  name: "Ali",
+  age: 25,
+  city: "Delhi",
+  role: "Admin",
+};
+
+Object.keys(user);
+// ["name", "age", "city", "role"]
+
+// Returns an ARRAY — so you can use all array methods on it
+Object.keys(user).length; // 4
+
+Object.keys(user).forEach(key => {
+  console.log(key, "→", user[key]);
+});
+// name → Ali
+// age  → 25
+// city → Delhi
+// role → Admin
+```
+
+**React use — render object fields dynamically:**
+
+```jsx
+const UserDetails = ({ user }) => {
+  return (
+    <ul>
+      {Object.keys(user).map(key => (
+        <li key={key}>
+          <strong>{key}:</strong> {user[key]}
+        </li>
+      ))}
+    </ul>
+  );
+};
+```
+
+No hardcoding field names — works for any shape of object.
+
+---
+
+## 2. `Object.values()` — Get all the values
+
+```js
+const scores = {
+  math:    95,
+  english: 88,
+  science: 92,
+};
+
+Object.values(scores);
+// [95, 88, 92]
+
+// Now you can use array methods
+const total   = Object.values(scores).reduce((a, b) => a + b, 0); // 275
+const average = total / Object.values(scores).length;              // 91.67
+const highest = Math.max(...Object.values(scores));                // 95
+```
+
+**React use — form validation:**
+
+```jsx
+const [errors, setErrors] = useState({
+  name:     "Name is required",
+  email:    "",
+  password: "Too short",
+});
+
+// Check if form has ANY errors
+const hasErrors = Object.values(errors).some(msg => msg !== "");
+
+<button disabled={hasErrors}>Submit</button>
+```
+
+---
+
+## 3. `Object.entries()` — Get key-value pairs together
+
+Returns an array of `[key, value]` pairs. Most powerful of the three — you get both key and value at once.
+
+```js
+const product = {
+  name:  "Laptop",
+  price: 70000,
+  stock: 15,
+};
+
+Object.entries(product);
+// [["name", "Laptop"], ["price", 70000], ["stock", 15]]
+
+// Destructure each pair directly
+Object.entries(product).forEach(([key, value]) => {
+  console.log(`${key}: ${value}`);
+});
+// name:  Laptop
+// price: 70000
+// stock: 15
+```
+
+**React use — render a settings/config panel:**
+
+```jsx
+const settings = {
+  darkMode:       true,
+  notifications:  false,
+  autoSave:       true,
+  language:       "English",
+};
+
+const SettingsPanel = () => {
+  return (
+    <div>
+      {Object.entries(settings).map(([key, value]) => (
+        <div key={key} style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>{key}</span>
+          <span>{String(value)}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+```
+
+**Transform an object — entries → map → back to object:**
+
+```js
+const prices = { apple: 100, banana: 40, mango: 80 };
+
+// Apply 10% discount to every price
+const discounted = Object.fromEntries(
+  Object.entries(prices).map(([item, price]) => [item, price * 0.9])
+);
+// { apple: 90, banana: 36, mango: 72 }
+```
+
+`Object.entries()` → transform with `.map()` → `Object.fromEntries()` back to object. This trio is extremely powerful.
+
+---
+
+## 4. `Object.assign()` — Merge objects
+
+Copies properties from one or more source objects into a target object. Mutates the target.
+
+```js
+const defaults = { theme: "light", lang: "en", fontSize: 14 };
+const userPrefs = { theme: "dark", fontSize: 18 };
+
+// Merge — userPrefs overrides defaults
+const config = Object.assign({}, defaults, userPrefs);
+// { theme: "dark", lang: "en", fontSize: 18 }
+
+// {} as target = don't mutate originals
+// Properties from right override properties from left
+```
+
+**Honestly — in modern React, spread is preferred over `Object.assign`:**
+
+```js
+// These do the same thing
+const config = Object.assign({}, defaults, userPrefs);
+const config = { ...defaults, ...userPrefs }; // cleaner — use this
+```
+
+You'll still see `Object.assign` in older codebases and in Redux reducers, so know it.
+
+---
+
+## 5. `Object.fromEntries()` — Entries array back to object
+
+The reverse of `Object.entries()`. Takes an array of `[key, value]` pairs and builds an object.
+
+```js
+const entries = [["name", "Ali"], ["age", 25], ["city", "Delhi"]];
+
+const obj = Object.fromEntries(entries);
+// { name: "Ali", age: 25, city: "Delhi" }
+```
+
+**Real use — transform URL search params into an object:**
+
+```js
+// URL: /products?category=electronics&sort=price&order=asc
+const params = new URLSearchParams(window.location.search);
+const filters = Object.fromEntries(params);
+// { category: "electronics", sort: "price", order: "asc" }
+```
+
+**Real use — filter object keys (no direct method exists):**
+
+```js
+const user = {
+  name:        "Ali",
+  password:    "secret123",
+  email:       "ali@example.com",
+  internalId:  "usr_xyz",
+};
+
+// Remove sensitive fields before displaying
+const safeUser = Object.fromEntries(
+  Object.entries(user).filter(([key]) => !["password", "internalId"].includes(key))
+);
+// { name: "Ali", email: "ali@example.com" }
+```
+
+---
+
+## 6. `Object.freeze()` and `Object.isFrozen()`
+
+Prevents an object from being modified — useful for constants and config.
+
+```js
+const CONFIG = Object.freeze({
+  API_URL:  "https://api.example.com",
+  TIMEOUT:  5000,
+  MAX_RETRIES: 3,
+});
+
+CONFIG.API_URL = "something else"; // silently fails in normal mode
+                                    // throws in strict mode
+console.log(CONFIG.API_URL);        // still "https://api.example.com"
+
+// Note — freeze is SHALLOW
+const obj = Object.freeze({ user: { name: "Ali" } });
+obj.user.name = "Sara"; // this WORKS — freeze doesn't go deep
+```
+
+---
+
+## The full mental model — objects vs arrays
+
+```js
+const data = {
+  user_1: { name: "Ali",  score: 90 },
+  user_2: { name: "Sara", score: 85 },
+  user_3: { name: "Ravi", score: 92 },
+};
+
+// Loop over it like an array
+Object.entries(data).forEach(([id, user]) => {
+  console.log(id, user.name, user.score);
+});
+
+// Find the top scorer
+const topScorer = Object.entries(data).reduce((best, [id, user]) => {
+  return user.score > best.score ? user : best;
+}, { score: 0 });
+// { name: "Ravi", score: 92 }
+
+// Get just the names
+const names = Object.values(data).map(user => user.name);
+// ["Ali", "Sara", "Ravi"]
+
+// Filter to only high scorers
+const highScorers = Object.fromEntries(
+  Object.entries(data).filter(([, user]) => user.score >= 90)
+);
+// { user_1: { name: "Ali", score: 90 }, user_3: { name: "Ravi", score: 92 } }
+```
+
+One dataset, four transformations — all with the methods you just learned.
+
+---
+
+## Quick Reference Card
+
+| Method | What it returns | Use when |
+|---|---|---|
+| `Object.keys(obj)` | Array of keys | Looping, counting fields |
+| `Object.values(obj)` | Array of values | Summing, checking values |
+| `Object.entries(obj)` | Array of `[key, value]` | Need both key and value |
+| `Object.assign({}, a, b)` | New merged object | Merging (prefer spread) |
+| `Object.fromEntries(arr)` | Object from pairs | Converting back from entries |
+| `Object.freeze(obj)` | Frozen object | Immutable constants |
+
+---
+
+## Interview Questions
+
+**Q: How do you loop over an object in JavaScript?**
+`Object.entries()` with `.forEach()` or `.map()`. For just keys: `Object.keys()`. For just values: `Object.values()`. You can't use a regular `for...of` directly on a plain object.
+
+**Q: How do you filter keys out of an object?**
+Convert to entries with `Object.entries()`, filter the array, convert back with `Object.fromEntries()`. There's no direct `.filter()` on objects.
+
+**Q: What's the difference between `Object.assign` and spread?**
+They behave the same for shallow merging. Spread (`{ ...a, ...b }`) is preferred in modern React — it's more readable and works inline. `Object.assign` is more common in older code and mutates the first argument (which is why you always pass `{}` as the first arg).
+
+---
+
+## Phase 1 Complete 🎉
+
+You now know everything you need before touching React:
+
+- `let/const`, arrow functions, destructuring, spread/rest
+- `map`, `filter`, `reduce`, `find`, `some`, `every`
+- `import/export`, barrel files, path aliases
+- Promises, `async/await`, `fetch`, `AbortController`
+- `Object.keys/values/entries/fromEntries/assign`
+
+This is the JavaScript foundation that makes React feel obvious instead of magical.
+
+---
+
+**Phase 2 starts now — Core React.** This is where it gets exciting.
 
 
