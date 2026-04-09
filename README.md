@@ -1612,4 +1612,297 @@ This is the JavaScript foundation that makes React feel obvious instead of magic
 
 **Phase 2 starts now — Core React.** This is where it gets exciting.
 
+# Topic 06 — What is React?
 
+## First principle: What problem does React solve?
+
+Before React, building dynamic UIs meant manually updating the DOM every time data changed. This was the source of every bug, every performance issue, every inconsistency in web apps.
+
+```js
+// Old way — jQuery/vanilla JS
+// Every time data changes, YOU manually update the DOM
+const user = { name: "Ali", score: 95 };
+
+document.getElementById("username").textContent = user.name;
+document.getElementById("score").textContent    = user.score;
+document.getElementById("badge").className      = user.score > 90 ? "gold" : "silver";
+document.getElementById("rank").style.display   = user.score > 90 ? "block" : "none";
+
+// Now imagine 50 things on screen that depend on this data
+// You have to track EVERY element and update EVERY one manually
+// Miss one → UI is out of sync with data → bugs everywhere
+```
+
+This approach has a fundamental flaw: **your UI and your data can get out of sync.** You're managing two things — the data AND the DOM — separately.
+
+React's insight was this:
+
+> **UI should be a function of state. When state changes, UI automatically reflects it. You never touch the DOM directly.**
+
+```
+Old way:   Data changes → You manually update DOM → Hope you didn't miss anything
+React way: Data changes → React automatically re-renders → UI always matches data
+```
+
+---
+
+## The Core Mental Model
+
+```js
+UI = f(state)
+```
+
+Your component is just a function. It takes state as input, returns UI as output. Every time state changes, React calls your function again and gets the new UI. That's the entire mental model.
+
+```jsx
+// This IS React's mental model in code
+const Counter = () => {
+  const [count, setCount] = useState(0); // state
+
+  // UI is just a function of that state
+  // React calls this function every time count changes
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>+</button>
+    </div>
+  );
+};
+```
+
+You never say "go find the `<p>` and update its text." You just say "count is now 1" and React figures out what the UI should look like.
+
+---
+
+## What is the Virtual DOM?
+
+Here's the problem with re-rendering everything on every state change: **touching the real DOM is slow.**
+
+The real DOM is a massive C++ object inside the browser. Reading and writing to it is expensive. If you re-rendered the entire page on every keystroke, it would be noticeably slow.
+
+React's solution: **the Virtual DOM.**
+
+The Virtual DOM is a plain JavaScript object — a lightweight copy of the real DOM that lives in memory.
+
+```js
+// Real DOM node — heavy C++ browser object, expensive to create/modify
+<div class="card">
+  <h1>Ali</h1>
+  <p>Score: 95</p>
+</div>
+
+// Virtual DOM representation — just a plain JS object, cheap
+{
+  type: "div",
+  props: { className: "card" },
+  children: [
+    { type: "h1", props: {}, children: ["Ali"] },
+    { type: "p",  props: {}, children: ["Score: 95"] }
+  ]
+}
+```
+
+Plain JS objects are thousands of times cheaper to create and compare than real DOM nodes.
+
+---
+
+## Reconciliation — How React updates the DOM
+
+When state changes, React doesn't throw away the entire DOM and rebuild it. It does something smarter:
+
+**Step 1 — Render:** React calls your component function and builds a new Virtual DOM tree.
+
+**Step 2 — Diff:** React compares the new Virtual DOM with the previous one (this is called **diffing**).
+
+**Step 3 — Commit:** React finds the exact differences (called a **patch**) and applies ONLY those changes to the real DOM.
+
+```
+State changes
+     ↓
+React renders new Virtual DOM
+     ↓
+React diffs new vs old Virtual DOM
+     ↓
+React finds: "only this <p> text changed"
+     ↓
+React updates ONLY that one <p> in the real DOM
+     ↓
+Everything else is untouched
+```
+
+```jsx
+const UserCard = () => {
+  const [score, setScore] = useState(95);
+
+  return (
+    <div className="card">        {/* unchanged — React won't touch this */}
+      <h1>Ali</h1>               {/* unchanged — React won't touch this */}
+      <p>Score: {score}</p>      {/* changed — React updates ONLY this */}
+      <button onClick={() => setScore(score + 1)}>+</button>
+    </div>
+  );
+};
+```
+
+React surgically updates only what changed. Everything else stays untouched.
+
+---
+
+## The Diffing Algorithm — How React compares trees
+
+React's diffing makes two assumptions that make it O(n) instead of O(n³):
+
+**Assumption 1 — Different types produce different trees.**
+
+If a `<div>` changes to a `<section>`, React throws away the entire subtree and rebuilds. No point diffing further.
+
+```jsx
+// Before
+<div>
+  <Counter />
+</div>
+
+// After — type changed from div to section
+<section>        {/* React unmounts old tree entirely, builds new one */}
+  <Counter />    {/* Counter is remounted — loses its state */}
+</section>
+```
+
+**Assumption 2 — Keys tell React which items are which in a list.**
+
+```jsx
+// Without keys — React can't track items
+// If you add "Ravi" at the top, React thinks ALL items changed
+<ul>
+  <li>Ali</li>
+  <li>Sara</li>
+</ul>
+
+// With keys — React knows exactly which item is which
+// Adding "Ravi" at the top, React knows Ali and Sara are unchanged
+<ul>
+  <li key="user-3">Ravi</li>   {/* new */}
+  <li key="user-1">Ali</li>    {/* unchanged */}
+  <li key="user-2">Sara</li>   {/* unchanged */}
+</ul>
+```
+
+This is why the `key` prop exists and why it must be unique and stable (not array index).
+
+---
+
+## React Fiber — The modern reconciler
+
+In React 16, the reconciliation engine was rewritten as **Fiber**. The key upgrade: reconciliation became **interruptible**.
+
+Before Fiber, if React was diffing a huge tree, it blocked everything until done — janky animations, dropped frames. Fiber broke work into small units that can be paused, prioritized, and resumed.
+
+```
+Old reconciler:  [===entire tree===] → blocks everything until done
+
+Fiber:           [chunk] → pause if urgent work exists → [chunk] → [chunk]
+                 "User clicked a button? Handle that first, come back to this"
+```
+
+This is what enables React 18's **Concurrent Features** — like `startTransition` (mark a state update as non-urgent) and `Suspense` (pause rendering until data is ready).
+
+You don't use Fiber directly, but it's why React feels fast and responsive at scale.
+
+---
+
+## Why React specifically — what makes it different
+
+```
+jQuery:    You manage the DOM directly. Imperative.
+React:     You describe what the UI should look like. Declarative.
+
+Vue:       Declarative, uses templates + reactive system. Opinionated.
+Angular:   Full framework, two-way binding, TypeScript-first. Very opinionated.
+React:     Just the UI layer. Unopinionated. You choose everything else.
+Svelte:    Compiles away — no runtime. Smaller bundles.
+React:     Runtime-based. Larger bundles. But largest ecosystem by far.
+```
+
+React's strengths:
+- **Largest ecosystem** — more jobs, more libraries, more answers on Stack Overflow
+- **Component model** — everything is a reusable component
+- **Unidirectional data flow** — data goes one way (parent → child), predictable
+- **Hooks** — share stateful logic without class components
+- **React Native** — same knowledge, write mobile apps
+
+---
+
+## How a React app actually boots
+
+```jsx
+// index.html — just one div
+<body>
+  <div id="root"></div>   // React takes over this div
+</body>
+
+// main.jsx — entry point
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+
+// App.jsx — your entire app as a component tree
+const App = () => {
+  return (
+    <div>
+      <Header />
+      <Main />
+      <Footer />
+    </div>
+  );
+};
+```
+
+React hijacks that single `<div id="root">` and manages everything inside it. The browser only ever has one real page — React simulates navigation and updates inside that one div. This is called a **Single Page Application (SPA)**.
+
+---
+
+## The component tree — how React thinks
+
+```
+App
+├── Header
+│   ├── Logo
+│   └── Nav
+│       ├── NavLink (Home)
+│       ├── NavLink (About)
+│       └── NavLink (Contact)
+├── Main
+│   ├── Sidebar
+│   └── ProductList
+│       ├── ProductCard (id:1)
+│       ├── ProductCard (id:2)
+│       └── ProductCard (id:3)
+└── Footer
+```
+
+When `ProductList`'s state changes, React re-renders `ProductList` and its children — not `Header`, not `Footer`. Only the affected subtree.
+
+---
+
+## Interview Questions
+
+**Q: What is the Virtual DOM and why does React use it?**
+The Virtual DOM is a plain JavaScript object representation of the real DOM. React uses it because JS objects are cheap to create and compare, while real DOM operations are expensive. React diffs the new and old Virtual DOM, finds the minimal changes needed, and applies only those to the real DOM — making updates fast.
+
+**Q: What is reconciliation?**
+Reconciliation is the process React uses to update the DOM. When state changes, React builds a new Virtual DOM tree, diffs it against the previous one, and commits only the changed parts to the real DOM. The algorithm is O(n) thanks to two heuristics: different element types produce different trees, and keys identify list items across renders.
+
+**Q: What is React Fiber?**
+Fiber is React's reconciliation engine introduced in React 16. It breaks rendering work into small interruptible units, allowing React to pause, prioritize, and resume work. This enables concurrent features like `startTransition` and `Suspense` — making React responsive even under heavy rendering load.
+
+**Q: What is a SPA and what are the trade-offs?**
+A Single Page Application loads once and React manages all navigation and updates inside one HTML page. Pros: fast navigation, no full page reloads, great UX. Cons: slower initial load (large JS bundle), poor SEO by default (solved by Next.js SSR/SSG).
+
+---
+
+**Topic 06 done.** You now understand WHY React exists and HOW it works under the hood. This context makes everything else — hooks, state, rendering — make complete sense.
+
+**Topic 07 — JSX.** The syntax you write React in — what it actually is, how it compiles, and all the rules. Say **"next"** to continue.
