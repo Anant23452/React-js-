@@ -1296,6 +1296,4 @@ If the component unmounts before the fetch completes, it tries to call `setState
 
 ---
 
-**Topic 04 done.** Phase 1 Foundation is almost complete — one topic left.
 
-**Topic 05 — Object Methods** (`Object.keys`, `.values`, `.entries`, `.assign`). Quick but important — you'll use these constantly when working with API data and state. Say **"next"** to continue.
