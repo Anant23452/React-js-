@@ -968,3 +968,334 @@ A file that re-exports from multiple files in a folder, so consumers can import 
 Modules give each file its own scope — no naming conflicts. It also makes code splitting possible: bundlers like Vite can load only the modules actually used, keeping bundle size small.
 
 ---
+# Topic 04 — Async JavaScript
+
+## First principle: Why does async exist?
+
+JavaScript runs on a **single thread** — it can only do one thing at a time. If you call an API and wait for the response synchronously, the entire browser freezes. Async lets JS say *"go fetch this data, and when it's ready, come back to me — I'll keep doing other things in the meantime."*
+
+In React, **every API call, every database read, every file load is async.** You can't avoid this.
+
+---
+
+## The problem async solves
+
+```js
+// Imagine this is how APIs worked — synchronous (they don't, but imagine)
+const data = fetch("https://api.example.com/users"); // browser FREEZES here
+// Nothing else runs until this completes — page is completely frozen
+console.log(data);
+```
+
+That's why we have async patterns — so JS can keep running while waiting.
+
+---
+
+## Stage 1 — Callbacks (old way, just understand it)
+
+```js
+// Old pattern — function called when data is ready
+getData(function(error, data) {
+  if (error) {
+    handleError(error);
+    return;
+  }
+  processData(data, function(error, result) {
+    if (error) {
+      handleError(error);
+      return;
+    }
+    saveResult(result, function(error) {
+      // This is "callback hell" — deeply nested, hard to read
+    });
+  });
+});
+```
+
+This gets unreadable fast. Promises solved this.
+
+---
+
+## Stage 2 — Promises
+
+A Promise is an object that represents a value that **will be available in the future**. It has 3 states:
+
+- `pending` — waiting, not done yet
+- `fulfilled` — completed successfully, has a value
+- `rejected` — failed, has an error
+
+```js
+// Creating a promise manually (rare — usually APIs return them)
+const myPromise = new Promise((resolve, reject) => {
+  const success = true;
+
+  if (success) {
+    resolve("Data loaded!");   // fulfilled
+  } else {
+    reject("Something failed"); // rejected
+  }
+});
+
+// Consuming a promise
+myPromise
+  .then(data => console.log(data))    // runs if fulfilled → "Data loaded!"
+  .catch(error => console.log(error)) // runs if rejected
+  .finally(() => console.log("Done")) // always runs, either way
+```
+
+**Chaining Promises — solves callback hell:**
+
+```js
+fetch("https://api.example.com/users")
+  .then(response => response.json())    // parse JSON — also returns a promise
+  .then(data => console.log(data))      // now you have the actual data
+  .catch(error => console.error(error))
+  .finally(() => setLoading(false));
+```
+
+Each `.then()` receives the return value of the previous one. Clean, readable, flat.
+
+---
+
+## Stage 3 — async/await (modern way — use this)
+
+`async/await` is just cleaner syntax built on top of Promises. Under the hood, it's the same thing — just looks synchronous.
+
+```js
+// The "async" keyword makes a function return a Promise
+// The "await" keyword pauses execution inside that function until the Promise resolves
+
+async function getUsers() {
+  const response = await fetch("https://api.example.com/users");
+  const data = await response.json();
+  console.log(data);
+}
+
+// Arrow function version — same thing
+const getUsers = async () => {
+  const response = await fetch("https://api.example.com/users");
+  const data = await response.json();
+  console.log(data);
+};
+```
+
+`await` can only be used **inside** an `async` function. It pauses that function, but the rest of the browser/app keeps running normally.
+
+---
+
+## Error handling with async/await
+
+```js
+// Use try/catch — same as synchronous error handling
+const getUsers = async () => {
+  try {
+    const response = await fetch("https://api.example.com/users");
+
+    // fetch() only rejects on network failure — NOT on 404/500
+    // You must check response.ok manually
+    if (!response.ok) {
+      throw new Error(`HTTP error — status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+
+  } catch (error) {
+    console.error("Failed to fetch users:", error.message);
+    throw error; // re-throw so the caller can handle it too
+  }
+};
+```
+
+This is a critical mistake beginners make — `fetch()` only throws on network failure (no internet, DNS error). A 404 or 500 response does NOT throw — you must check `response.ok` yourself.
+
+---
+
+## The full fetch pattern — what you'll write in React
+
+```js
+const fetchUserById = async (id) => {
+  try {
+    const response = await fetch(`https://api.example.com/users/${id}`);
+
+    if (!response.ok) {
+      throw new Error(`User not found — ${response.status}`);
+    }
+
+    const user = await response.json();
+    return user;
+
+  } catch (error) {
+    throw error;
+  }
+};
+```
+
+**POST request — sending data:**
+
+```js
+const createUser = async (userData) => {
+  try {
+    const response = await fetch("https://api.example.com/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(userData), // object → JSON string
+    });
+
+    if (!response.ok) throw new Error("Failed to create user");
+
+    const newUser = await response.json();
+    return newUser;
+
+  } catch (error) {
+    throw error;
+  }
+};
+```
+
+---
+
+## How this connects to React — useEffect + fetch
+
+This is the pattern you'll write for every API call in React:
+
+```jsx
+import { useState, useEffect } from "react";
+
+const UserList = () => {
+  const [users, setUsers]       = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(null);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("https://api.example.com/users");
+
+        if (!response.ok) throw new Error("Failed to fetch");
+
+        const data = await response.json();
+        setUsers(data);
+
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []); // empty array = run once on mount
+
+  if (loading) return <p>Loading...</p>;
+  if (error)   return <p>Error: {error}</p>;
+
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+};
+```
+
+Three states — `loading`, `error`, `data` — every API call in React has exactly these three. This pattern is so important we'll revisit it deeply in Phase 4.
+
+---
+
+## Promise.all — run multiple requests at once
+
+```js
+// BAD — sequential, slow (waits for each one to finish before starting next)
+const users    = await fetchUsers();    // 300ms
+const products = await fetchProducts(); // 300ms
+const orders   = await fetchOrders();   // 300ms
+// Total: 900ms
+
+// GOOD — parallel, fast (all start at same time)
+const [users, products, orders] = await Promise.all([
+  fetchUsers(),
+  fetchProducts(),
+  fetchOrders(),
+]);
+// Total: ~300ms (longest one wins)
+```
+
+`Promise.all` takes an array of promises, runs them in parallel, and resolves when ALL are done. If any one rejects, the whole thing rejects.
+
+```js
+// Promise.allSettled — resolves even if some fail
+const results = await Promise.allSettled([
+  fetchUsers(),
+  fetchProducts(),
+  fetchOrders(),
+]);
+
+results.forEach(result => {
+  if (result.status === "fulfilled") {
+    console.log("Success:", result.value);
+  } else {
+    console.log("Failed:", result.reason);
+  }
+});
+```
+
+---
+
+## Abort Controller — cancel a request
+
+Critical for React — if a component unmounts before a fetch completes, you'll get a memory leak / state update on unmounted component warning.
+
+```jsx
+useEffect(() => {
+  const controller = new AbortController();
+
+  const fetchData = async () => {
+    try {
+      const response = await fetch("https://api.example.com/users", {
+        signal: controller.signal, // link the abort signal
+      });
+      const data = await response.json();
+      setUsers(data);
+
+    } catch (err) {
+      if (err.name === "AbortError") return; // ignore — we cancelled it
+      setError(err.message);
+    }
+  };
+
+  fetchData();
+
+  // Cleanup — if component unmounts, cancel the request
+  return () => controller.abort();
+}, []);
+```
+
+This is a detail that separates junior devs from mid-level devs in interviews.
+
+---
+
+## Interview Questions
+
+**Q: What is the difference between `.then()` and `async/await`?**
+They're the same thing — `async/await` is syntax sugar over Promises. `await` pauses the function and waits for the Promise to resolve, then returns the value. Under the hood, it's identical to `.then()`. `async/await` is preferred for readability, especially when chaining multiple async operations.
+
+**Q: Does `fetch()` throw an error on a 404?**
+No — this is a classic gotcha. `fetch()` only rejects on network errors (no internet, DNS failure). A 404 or 500 response still resolves successfully. You must check `response.ok` (which is true for status 200–299) and throw manually.
+
+**Q: What is `Promise.all` and when do you use it?**
+`Promise.all` runs multiple promises in parallel and resolves when all complete. Use it when requests are independent of each other — loading user + products + orders at the same time is 3x faster than sequential awaits.
+
+**Q: What happens if you don't clean up a fetch in `useEffect`?**
+If the component unmounts before the fetch completes, it tries to call `setState` on an unmounted component — causing a memory leak and a React warning. The fix is `AbortController` — you abort the request in the `useEffect` cleanup function.
+
+---
+
+**Topic 04 done.** Phase 1 Foundation is almost complete — one topic left.
+
+**Topic 05 — Object Methods** (`Object.keys`, `.values`, `.entries`, `.assign`). Quick but important — you'll use these constantly when working with API data and state. Say **"next"** to continue.
