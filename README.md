@@ -1903,4 +1903,443 @@ A Single Page Application loads once and React manages all navigation and update
 
 ---
 
+# Topic 07 — JSX
 
+## First principle: JSX is not HTML. It's not magic. It's just JavaScript.
+
+The biggest confusion beginners have is thinking JSX is some special templating language. It isn't. JSX is **syntactic sugar** — it gets compiled to plain JavaScript function calls before the browser ever sees it.
+
+```jsx
+// What you write — JSX
+const element = <h1 className="title">Hello, Ali</h1>;
+
+// What Babel compiles it to — plain JS
+const element = React.createElement(
+  "h1",                        // element type
+  { className: "title" },      // props
+  "Hello, Ali"                 // children
+);
+```
+
+`React.createElement` returns a plain JavaScript object — the Virtual DOM node you learned about in Topic 06. JSX is just a nicer way to write those function calls.
+
+---
+
+## Why JSX exists
+
+```jsx
+// Without JSX — writing a real UI is unreadable
+const App = () => {
+  return React.createElement(
+    "div", { className: "app" },
+    React.createElement("h1", null, "Welcome"),
+    React.createElement(
+      "ul", null,
+      React.createElement("li", { key: 1 }, "Item 1"),
+      React.createElement("li", { key: 2 }, "Item 2"),
+      React.createElement("li", { key: 3 }, "Item 3")
+    )
+  );
+};
+
+// With JSX — same thing, actually readable
+const App = () => {
+  return (
+    <div className="app">
+      <h1>Welcome</h1>
+      <ul>
+        <li key={1}>Item 1</li>
+        <li key={2}>Item 2</li>
+        <li key={3}>Item 3</li>
+      </ul>
+    </div>
+  );
+};
+```
+
+Same output. JSX is just for humans.
+
+---
+
+## Rule 1 — One root element
+
+Every JSX expression must return **one** root element. You can't return siblings.
+
+```jsx
+// WRONG — two root elements
+const App = () => {
+  return (
+    <h1>Title</h1>
+    <p>Paragraph</p>   // Error: Adjacent JSX elements must be wrapped
+  );
+};
+
+// CORRECT — wrap in a div
+const App = () => {
+  return (
+    <div>
+      <h1>Title</h1>
+      <p>Paragraph</p>
+    </div>
+  );
+};
+
+// BETTER — use a Fragment (no extra DOM node)
+const App = () => {
+  return (
+    <>
+      <h1>Title</h1>
+      <p>Paragraph</p>
+    </>
+  );
+};
+```
+
+`<>...</>` is shorthand for `<React.Fragment>...</React.Fragment>`. It groups elements without adding an extra `<div>` to the DOM. Use it whenever you don't need a wrapper element.
+
+---
+
+## Rule 2 — className, not class
+
+HTML attributes that conflict with JS reserved words are renamed in JSX:
+
+```jsx
+// HTML             →  JSX
+class="card"        →  className="card"
+for="username"      →  htmlFor="username"   (on <label>)
+tabindex="0"        →  tabIndex="0"
+```
+
+```jsx
+// WRONG
+<div class="card">...</div>         // class is reserved in JS
+<label for="name">Name</label>      // for is reserved in JS
+
+// CORRECT
+<div className="card">...</div>
+<label htmlFor="name">Name</label>
+```
+
+---
+
+## Rule 3 — All tags must be closed
+
+HTML is forgiving about unclosed tags. JSX is not.
+
+```jsx
+// WRONG — valid HTML but invalid JSX
+<img src="photo.jpg">
+<input type="text">
+<br>
+
+// CORRECT — self-closing tags required
+<img src="photo.jpg" />
+<input type="text" />
+<br />
+```
+
+---
+
+## Rule 4 — Expressions in `{}` — The most important rule
+
+Anything inside `{}` is evaluated as a JavaScript expression. This is how you make JSX dynamic.
+
+```jsx
+const name    = "Ali";
+const age     = 25;
+const isAdmin = true;
+
+const UserCard = () => {
+  return (
+    <div>
+      <h1>{name}</h1>                          {/* variable */}
+      <p>Age: {age}</p>                        {/* number */}
+      <p>Role: {isAdmin ? "Admin" : "User"}</p>{/* ternary */}
+      <p>In 10 years: {age + 10}</p>           {/* expression */}
+      <p>{name.toUpperCase()}</p>              {/* method call */}
+      <p>{`Hello, ${name}!`}</p>              {/* template literal */}
+    </div>
+  );
+};
+```
+
+**What can go inside `{}`:**
+```jsx
+{someVariable}           // variable
+{2 + 2}                  // expression → renders "4"
+{isLoggedIn ? "Hi" : "Login"} // ternary
+{user.name}              // property access
+{formatDate(date)}       // function call
+{[1,2,3].join(", ")}     // method chain
+```
+
+**What CANNOT go inside `{}`:**
+```jsx
+{if (x) { ... }}         // statements don't work — use ternary instead
+{for (let i...) { ... }} // loops don't work — use .map() instead
+{let x = 5}              // declarations don't work
+```
+
+---
+
+## Rule 5 — JSX is an expression itself
+
+JSX can be stored in variables, returned from functions, passed as props — because it compiles to a function call which returns an object.
+
+```jsx
+// Store in a variable
+const heading = <h1>Welcome</h1>;
+
+// Return from a function
+const getGreeting = (name) => <p>Hello, {name}!</p>;
+
+// Use in a ternary
+const content = isLoggedIn
+  ? <Dashboard />
+  : <LoginPage />;
+
+// Pass as a prop (children)
+const layout = (
+  <Layout>
+    <Sidebar />
+    <Main />
+  </Layout>
+);
+```
+
+---
+
+## Inline styles — objects, not strings
+
+In JSX, `style` takes a JavaScript object, not a CSS string. Property names are camelCase.
+
+```jsx
+// HTML way — string (WRONG in JSX)
+<div style="background-color: red; font-size: 16px;">
+
+// JSX way — object with camelCase properties
+<div style={{ backgroundColor: "red", fontSize: "16px" }}>
+```
+
+The double `{{ }}` isn't special syntax — the outer `{}` means "JavaScript expression", the inner `{}` is the object literal.
+
+```jsx
+// Clean way — define the style object separately
+const cardStyle = {
+  backgroundColor: "#fff",
+  padding: "16px",
+  borderRadius: "8px",
+  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+};
+
+const Card = () => <div style={cardStyle}>Content</div>;
+
+// Dynamic styles
+const Button = ({ primary }) => {
+  const style = {
+    backgroundColor: primary ? "#0070f3" : "#fff",
+    color:           primary ? "#fff"    : "#000",
+    padding:         "8px 16px",
+    border:          "1px solid #0070f3",
+    borderRadius:    "4px",
+    cursor:          "pointer",
+  };
+
+  return <button style={style}>Click me</button>;
+};
+```
+
+---
+
+## Comments in JSX
+
+```jsx
+const App = () => {
+  return (
+    <div>
+      {/* This is a JSX comment */}
+      <h1>Hello</h1>
+
+      {/* Multi-line
+          comment */}
+      <p>World</p>
+
+      // This is NOT a comment — it renders as text on screen!
+    </div>
+  );
+};
+```
+
+---
+
+## Rendering different types — what React does with values
+
+```jsx
+// String and numbers — render as text
+{42}          // → "42"
+{"hello"}     // → "hello"
+
+// Booleans — render NOTHING
+{true}        // → nothing
+{false}       // → nothing
+{undefined}   // → nothing
+{null}        // → nothing
+
+// This is why && conditional rendering works
+{isLoggedIn && <Dashboard />}
+// If false → renders nothing
+// If true  → renders <Dashboard />
+
+// Arrays — render each item
+{[<li key="a">A</li>, <li key="b">B</li>]}
+// → renders both items
+
+// OBJECTS — throw an error
+{{ name: "Ali" }}  // Error: Objects are not valid as React children
+// You must access a specific property
+{user.name}        // correct
+```
+
+---
+
+## JSX spread props — pass all props at once
+
+```jsx
+const buttonProps = {
+  type:      "submit",
+  disabled:  false,
+  className: "btn-primary",
+};
+
+// Instead of passing each one manually
+<button type={buttonProps.type} disabled={buttonProps.disabled} className={buttonProps.className}>
+
+// Spread them all at once
+<button {...buttonProps}>Submit</button>
+
+// Combine spread with specific overrides
+<button {...buttonProps} disabled={true}>Submit</button>
+// disabled={true} overrides the spread value
+```
+
+This is extremely useful when building wrapper components that pass through all props:
+
+```jsx
+// A custom button that wraps native button
+const Button = ({ children, variant = "primary", ...rest }) => {
+  // ...rest captures all other props (onClick, disabled, type, etc.)
+  return (
+    <button className={`btn btn-${variant}`} {...rest}>
+      {children}
+    </button>
+  );
+};
+
+// Usage — onClick, disabled are passed through via ...rest
+<Button variant="secondary" onClick={handleClick} disabled={loading}>
+  Save
+</Button>
+```
+
+---
+
+## The `children` prop — content between tags
+
+```jsx
+// Anything between opening and closing tags = children prop
+<Button>Click me</Button>
+// Button receives props.children = "Click me"
+
+<Card>
+  <h2>Title</h2>
+  <p>Content</p>
+</Card>
+// Card receives props.children = [<h2>, <p>]
+
+// Using children inside the component
+const Card = ({ children, title }) => {
+  return (
+    <div className="card">
+      <h2>{title}</h2>
+      <div className="card-body">
+        {children}         {/* renders whatever was passed between tags */}
+      </div>
+    </div>
+  );
+};
+
+// Usage
+<Card title="User Profile">
+  <img src="avatar.jpg" />
+  <p>Ali — Admin</p>
+  <button>Edit</button>
+</Card>
+```
+
+`children` is just a prop — the content between your component's tags. This is the foundation of composition in React.
+
+---
+
+## Full example — everything together
+
+```jsx
+const ProductCard = ({ product, onAddToCart }) => {
+  const { name, price, image, inStock, rating } = product;
+
+  const cardStyle = {
+    opacity: inStock ? 1 : 0.6,
+    border:  "1px solid #eee",
+    padding: "16px",
+    borderRadius: "8px",
+  };
+
+  return (
+    <div style={cardStyle} className="product-card">
+
+      <img src={image} alt={name} />
+
+      <h3>{name}</h3>
+
+      <p className="price">₹{price.toLocaleString()}</p>
+
+      {/* Conditional rendering */}
+      {!inStock && <span className="badge">Out of Stock</span>}
+
+      {/* Expression */}
+      <p>{"★".repeat(Math.round(rating))} ({rating})</p>
+
+      {/* Event handler inline */}
+      <button
+        disabled={!inStock}
+        onClick={() => onAddToCart(product)}
+        className={`btn ${inStock ? "btn-primary" : "btn-disabled"}`}
+      >
+        {inStock ? "Add to Cart" : "Unavailable"}
+      </button>
+
+    </div>
+  );
+};
+```
+
+---
+
+## Interview Questions
+
+**Q: What is JSX and how does it work?**
+JSX is syntactic sugar that compiles to `React.createElement()` calls. When Babel processes your code, every JSX element becomes a function call that returns a plain JavaScript object — a Virtual DOM node. The browser never sees JSX; it only sees JavaScript.
+
+**Q: Why can't you use `if` statements directly in JSX?**
+JSX `{}` only accepts expressions — code that evaluates to a value. `if` is a statement, not an expression. Use ternary (`condition ? a : b`) or short-circuit (`condition && element`) for conditionals inside JSX. For complex logic, compute it before the return statement.
+
+**Q: What is a Fragment and why use it?**
+A Fragment (`<>...</>`) lets you return multiple elements without adding an extra DOM node. If you wrap in a `<div>` instead, you pollute the DOM with meaningless wrapper elements that can break layouts (especially flexbox/grid). Fragments give React what it needs (one root) without affecting the DOM.
+
+**Q: What's the difference between `null`, `false`, `undefined` in JSX?**
+All three render nothing — they're React's way of saying "render no output here." This is intentional and enables the `&&` pattern: `{isLoggedIn && <Dashboard />}`. If `isLoggedIn` is false, nothing renders. But be careful — `0` is falsy but DOES render! Use `{count > 0 && <Badge />}` instead of `{count && <Badge />}`.
+
+---
+
+**Topic 07 done.** JSX is fully demystified — you know exactly what it compiles to, all the rules, and all the patterns.
+
+**Topic 08 — Components.** The heart of React. What they are, how to build them, how to think in components. Say **"next"** to continue.
