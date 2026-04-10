@@ -2340,6 +2340,3 @@ All three render nothing — they're React's way of saying "render no output her
 
 ---
 
-**Topic 07 done.** JSX is fully demystified — you know exactly what it compiles to, all the rules, and all the patterns.
-
-**Topic 08 — Components.** The heart of React. What they are, how to build them, how to think in components. Say **"next"** to continue.
