@@ -2340,3 +2340,409 @@ All three render nothing — they're React's way of saying "render no output her
 
 ---
 
+# Topic 08 — Components
+
+## First principle: What is a component?
+
+A component is a **function that returns UI**. That's it. No magic. You give it some input (props), it gives you back some JSX (output). Because it's just a function, everything you know about functions applies — you can compose them, reuse them, pass them around.
+
+```jsx
+// This is a complete React component
+const Greeting = () => {
+  return <h1>Hello, World!</h1>;
+};
+```
+
+The power comes from one idea: **your entire UI is a tree of components.** Every button, every card, every page — all components. Big components are made of smaller components. Small components are reused everywhere.
+
+---
+
+## Anatomy of a component
+
+```jsx
+// 1. Name starts with CAPITAL LETTER — required
+//    Lowercase = HTML tag, Uppercase = React component
+const UserCard = ({ name, role, avatar }) => {  // 2. Props are the input
+
+  // 3. Logic lives here — JS, hooks, calculations
+  const initials = name.split(" ").map(n => n[0]).join("");
+  const isAdmin  = role === "admin";
+
+  // 4. One return — the UI
+  return (
+    <div className="card">
+      {avatar
+        ? <img src={avatar} alt={name} />
+        : <div className="avatar">{initials}</div>
+      }
+      <h3>{name}</h3>
+      <p>{role}</p>
+      {isAdmin && <span className="badge">Admin</span>}
+    </div>
+  );
+};
+```
+
+Four parts: name, props, logic, return. Every component follows this structure.
+
+---
+
+## Capital letter rule — why it matters
+
+```jsx
+// React sees lowercase → treats as HTML tag → looks for <usercard> in HTML spec
+<usercard />   // renders nothing useful, no error
+
+// React sees uppercase → treats as component → calls UserCard function
+<UserCard />   // calls your function, renders what it returns
+
+// This is how React tells them apart at compile time
+// <div>  → React.createElement("div", ...)     — string, HTML element
+// <Card> → React.createElement(Card, ...)      — reference to your function
+```
+
+---
+
+## Three ways to write components
+
+```jsx
+// 1. Arrow function — most common in modern React
+const Button = ({ label }) => {
+  return <button>{label}</button>;
+};
+
+// 2. Arrow function with implicit return — for simple components
+const Button = ({ label }) => <button>{label}</button>;
+
+// 3. Function declaration — also valid, slightly different hoisting
+function Button({ label }) {
+  return <button>{label}</button>;
+}
+```
+
+All three are identical in behaviour. Arrow function is the convention in most codebases — use that.
+
+---
+
+## Thinking in components — how to break down a UI
+
+This is the most important skill. Given any UI, you need to identify the component boundaries.
+
+```
+┌─────────────────────────────────┐
+│  Header                         │
+│  ┌──────┐  ┌─────────────────┐  │
+│  │ Logo │  │  Nav            │  │
+│  └──────┘  │ [Home][About]   │  │
+│            └─────────────────┘  │
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│  ProductList                    │
+│  ┌──────────┐  ┌──────────┐    │
+│  │ProductCard│  │ProductCard│   │
+│  │  Phone   │  │  Laptop  │    │
+│  │  ₹30,000 │  │  ₹70,000 │    │
+│  │[Add Cart]│  │[Add Cart]│    │
+│  └──────────┘  └──────────┘    │
+└─────────────────────────────────┘
+```
+
+Rules for splitting:
+- **Single responsibility** — one component does one thing
+- **Reusability** — if something appears more than once, it's a component
+- **Complexity** — if a section is complex enough to reason about separately, extract it
+
+---
+
+## Building the UI above — component by component
+
+```jsx
+// Smallest first — build bottom-up
+
+// 1. Leaf components — no children components inside
+const Logo = () => (
+  <img src="/logo.svg" alt="Logo" className="logo" />
+);
+
+const NavLink = ({ href, label }) => (
+  <a href={href} className="nav-link">{label}</a>
+);
+
+// 2. Compose into bigger components
+const Nav = () => (
+  <nav>
+    <NavLink href="/"       label="Home"    />
+    <NavLink href="/about"  label="About"   />
+    <NavLink href="/contact"label="Contact" />
+  </nav>
+);
+
+const Header = () => (
+  <header className="header">
+    <Logo />
+    <Nav />
+  </header>
+);
+
+// 3. Product components
+const ProductCard = ({ name, price, image }) => (
+  <div className="product-card">
+    <img src={image} alt={name} />
+    <h3>{name}</h3>
+    <p>₹{price.toLocaleString()}</p>
+    <button>Add to Cart</button>
+  </div>
+);
+
+const products = [
+  { id: 1, name: "Phone",  price: 30000, image: "/phone.jpg"  },
+  { id: 2, name: "Laptop", price: 70000, image: "/laptop.jpg" },
+];
+
+const ProductList = () => (
+  <div className="product-list">
+    {products.map(product => (
+      <ProductCard key={product.id} {...product} />
+    ))}
+  </div>
+);
+
+// 4. Assemble the full page
+const App = () => (
+  <>
+    <Header />
+    <main>
+      <ProductList />
+    </main>
+  </>
+);
+```
+
+Each component is small, focused, and readable. The composition is the power.
+
+---
+
+## Component reusability — the real value
+
+```jsx
+// ONE component, used everywhere with different props
+const Badge = ({ text, variant = "default" }) => {
+  const colors = {
+    default: { bg: "#f0f0f0", color: "#333"  },
+    success: { bg: "#d4edda", color: "#155724"},
+    danger:  { bg: "#f8d7da", color: "#721c24"},
+    info:    { bg: "#d1ecf1", color: "#0c5460"},
+  };
+
+  const style = {
+    ...colors[variant],
+    padding:      "2px 8px",
+    borderRadius: "12px",
+    fontSize:     "12px",
+    fontWeight:   "500",
+    display:      "inline-block",
+  };
+
+  return <span style={style}>{text}</span>;
+};
+
+// Reused everywhere with different data
+<Badge text="Admin"      variant="info"    />
+<Badge text="New"        variant="success" />
+<Badge text="Sold Out"   variant="danger"  />
+<Badge text="Pending"    variant="default" />
+```
+
+Write once, use everywhere. Change the component once — every usage updates.
+
+---
+
+## Container vs Presentational components
+
+A pattern that helps organise thinking:
+
+```jsx
+// Presentational — only cares about how things look
+// Receives data via props, no logic, no API calls
+const UserList = ({ users, onDelete }) => (
+  <ul>
+    {users.map(user => (
+      <li key={user.id}>
+        {user.name}
+        <button onClick={() => onDelete(user.id)}>Delete</button>
+      </li>
+    ))}
+  </ul>
+);
+
+// Container — handles logic, data fetching, state
+// Passes data down to presentational components
+const UserListContainer = () => {
+  const [users, setUsers]     = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUsers().then(data => {
+      setUsers(data);
+      setLoading(false);
+    });
+  }, []);
+
+  const handleDelete = (id) => {
+    setUsers(users.filter(u => u.id !== id));
+  };
+
+  if (loading) return <p>Loading...</p>;
+
+  return <UserList users={users} onDelete={handleDelete} />;
+};
+```
+
+This separation makes components easier to test, reason about, and reuse. The presentational component doesn't care where the data comes from — you can feed it from an API, from mock data, or from a test fixture.
+
+---
+
+## Component composition patterns
+
+### Pattern 1 — children prop (slot pattern)
+
+```jsx
+// Generic layout shell — doesn't know what goes inside
+const Card = ({ title, children, footer }) => (
+  <div className="card">
+    {title && <div className="card-header"><h3>{title}</h3></div>}
+    <div className="card-body">{children}</div>
+    {footer && <div className="card-footer">{footer}</div>}
+  </div>
+);
+
+// Fill it with anything
+<Card title="User Profile" footer={<button>Edit</button>}>
+  <img src="avatar.jpg" />
+  <p>Ali — Admin</p>
+  <p>ali@example.com</p>
+</Card>
+
+<Card title="Stats">
+  <p>Posts: 42</p>
+  <p>Followers: 1,204</p>
+</Card>
+```
+
+### Pattern 2 — Components as props
+
+```jsx
+// Pass a component as a prop — powerful for layouts
+const Page = ({ header, sidebar, content }) => (
+  <div className="page">
+    <div className="page-header">{header}</div>
+    <div className="page-body">
+      <aside>{sidebar}</aside>
+      <main>{content}</main>
+    </div>
+  </div>
+);
+
+// Usage — inject any component into any slot
+<Page
+  header={<Header />}
+  sidebar={<FilterPanel />}
+  content={<ProductList />}
+/>
+```
+
+---
+
+## When to split a component — practical rules
+
+```jsx
+// TOO BIG — do this and you'll regret it
+const Dashboard = () => {
+  return (
+    <div>
+      {/* 50 lines of stats UI */}
+      {/* 80 lines of chart UI */}
+      {/* 60 lines of table UI */}
+      {/* 40 lines of filters */}
+      {/* total: 230 lines — unreadable */}
+    </div>
+  );
+};
+
+// SPLIT — each concern is its own component
+const Dashboard = () => (
+  <div>
+    <StatsBar />
+    <ChartSection />
+    <DataTable />
+    <FilterPanel />
+  </div>
+);
+// Dashboard is now 6 lines — reads like an outline
+```
+
+**Practical rule:** If a component is over ~80 lines, look for things to extract. If you have to scroll to understand one component, it's too big.
+
+---
+
+## Common mistakes
+
+```jsx
+// MISTAKE 1 — defining a component inside another component
+// React creates a new function reference every render → always remounts
+const Parent = () => {
+  // DON'T do this — Child is redefined every render
+  const Child = () => <p>I'm a child</p>;
+  return <Child />;
+};
+
+// DO this — define outside
+const Child = () => <p>I'm a child</p>;
+const Parent = () => <Child />;
+
+
+// MISTAKE 2 — returning nothing (returns undefined)
+const Card = () => {
+  <div>Content</div>  // forgot return keyword!
+};
+
+// Fix
+const Card = () => {
+  return <div>Content</div>;
+};
+// Or implicit return with parens
+const Card = () => (
+  <div>Content</div>
+);
+
+
+// MISTAKE 3 — lowercase component name
+const userCard = () => <div>Ali</div>;
+<userCard />  // treated as HTML tag — renders nothing
+
+// Fix
+const UserCard = () => <div>Ali</div>;
+<UserCard />  // correct
+```
+
+---
+
+## Interview Questions
+
+**Q: What is a React component?**
+A component is a JavaScript function that accepts props as input and returns JSX as output. React builds a tree of components — the entire UI is a composition of these functions. When state or props change, React re-calls the function and updates the DOM based on the new output.
+
+**Q: What is the difference between a component and an element?**
+A component is the function/class definition — the blueprint. An element is what gets returned when React calls that function — a plain JavaScript object describing what to render (`{ type: "div", props: {...} }`). When you write `<UserCard />`, React calls the `UserCard` function, which returns a React element.
+
+**Q: Why should you not define components inside other components?**
+Every render of the parent creates a new function reference for the inner component. React sees a different component type on each render and unmounts/remounts the inner component instead of updating it — destroying its state and causing unnecessary DOM work. Always define components at the module's top level.
+
+**Q: What is the difference between container and presentational components?**
+Presentational components only handle rendering — they receive data via props and return JSX. Container components handle logic, state, and data fetching, then pass data down to presentational components. This separation makes presentational components easily testable and reusable — they're pure functions of their props.
+
+---
+
+**Topic 08 done.** You now know how to think in components, structure a UI, and avoid the classic mistakes.
+
+**Topic 09 — Props.** How data flows between components, prop types, default props, and all the patterns you need. Say **"next"** to continue.
