@@ -3176,6 +3176,3 @@ By calling callback functions passed down as props. The parent defines a functio
 
 ---
 
-**Topic 09 done.** Props fully covered — passing data, callbacks, children, spreading, defaults, and the immutability rule.
-
-**Topic 10 — `useState`.** This is where React comes alive. State is what makes your UI dynamic — clicking, typing, toggling, loading. The most used hook in React. Say **"next"** to continue.
