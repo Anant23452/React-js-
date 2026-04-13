@@ -3176,3 +3176,432 @@ By calling callback functions passed down as props. The parent defines a functio
 
 ---
 
+# Topic 10 — `useState`
+
+## First principle: What is state?
+
+Props are data that comes **from outside** the component. State is data that lives **inside** the component and can change over time.
+
+Think of it this way:
+
+```
+Props = parameters someone passes to your function — you can't change them
+State = local variables your function remembers between calls — you control them
+```
+
+The key word is **remembers.** A normal variable resets every time the function runs. State persists across renders.
+
+```jsx
+// Why normal variables don't work
+const Counter = () => {
+  let count = 0; // resets to 0 EVERY render
+
+  return (
+    <div>
+      <p>{count}</p>
+      <button onClick={() => {
+        count = count + 1;       // updates count...
+        console.log(count);      // logs 1, 2, 3... correctly
+        // BUT React doesn't know anything changed
+        // So it never re-renders — screen stays at 0
+      }}>+</button>
+    </div>
+  );
+};
+```
+
+Two problems with normal variables:
+1. React doesn't know the value changed — no re-render
+2. Even if React did re-render, the variable resets to `0` anyway
+
+`useState` solves both problems — it stores the value outside the component so it survives re-renders, and it tells React to re-render when the value changes.
+
+---
+
+## The syntax — unpacked completely
+
+```jsx
+import { useState } from "react";
+
+const Counter = () => {
+  const [count, setCount] = useState(0);
+  //     ^       ^                   ^
+  //     |       |                   initial value
+  //     |       setter function — call this to update
+  //     current value
+
+  return (
+    <div>
+      <p>{count}</p>
+      <button onClick={() => setCount(count + 1)}>+</button>
+    </div>
+  );
+};
+```
+
+`useState(0)` returns an array of exactly two things: `[currentValue, setterFunction]`. You destructure them and name them whatever you want — convention is `value` and `setValue`.
+
+---
+
+## What happens on every render — the full picture
+
+```jsx
+const Counter = () => {
+  const [count, setCount] = useState(0);
+
+  // RENDER 1 (initial):
+  //   useState(0) → count = 0
+  //   React renders: <p>0</p>
+
+  // User clicks button → setCount(1)
+  // React schedules a re-render
+
+  // RENDER 2:
+  //   useState(0) → count = 1  ← React ignores the 0, gives stored value
+  //   React renders: <p>1</p>
+
+  // User clicks button → setCount(2)
+
+  // RENDER 3:
+  //   useState(0) → count = 2
+  //   React renders: <p>2</p>
+
+  return (
+    <div>
+      <p>{count}</p>
+      <button onClick={() => setCount(count + 1)}>+</button>
+    </div>
+  );
+};
+```
+
+The `0` in `useState(0)` is only used on the **first render**. After that, React stores the value and returns it — the initial value argument is ignored on every subsequent render.
+
+---
+
+## The updater function — critical pattern
+
+There are two ways to call the setter. Most beginners only know the first.
+
+```jsx
+// Way 1 — pass new value directly
+setCount(count + 1);
+
+// Way 2 — pass an updater function
+setCount(prevCount => prevCount + 1);
+```
+
+They look similar — but there's a critical difference. React **batches** state updates. If you call the setter multiple times in one event handler, React doesn't re-render after each call — it batches them and re-renders once. This causes a bug with Way 1:
+
+```jsx
+// BUG — all three calls read the same stale count
+const handleTripleIncrement = () => {
+  setCount(count + 1); // count is 0 → sets to 1
+  setCount(count + 1); // count is STILL 0 → sets to 1 again!
+  setCount(count + 1); // count is STILL 0 → sets to 1 again!
+  // Result: count becomes 1, not 3
+};
+
+// CORRECT — each call gets the latest value
+const handleTripleIncrement = () => {
+  setCount(prev => prev + 1); // prev=0 → 1
+  setCount(prev => prev + 1); // prev=1 → 2
+  setCount(prev => prev + 1); // prev=2 → 3
+  // Result: count becomes 3 ✓
+};
+```
+
+**Rule of thumb:** When new state depends on old state, always use the updater function.
+
+```jsx
+// Depends on old state → use updater function
+setCount(prev => prev + 1);
+setItems(prev => [...prev, newItem]);
+setUser(prev => ({ ...prev, name: "Ali" }));
+
+// Doesn't depend on old state → direct value is fine
+setName("Ali");
+setLoading(false);
+setError(null);
+```
+
+---
+
+## State with different data types
+
+### Boolean state — toggles
+
+```jsx
+const [isOpen,    setIsOpen]    = useState(false);
+const [isLoading, setIsLoading] = useState(false);
+const [isDarkMode,setIsDarkMode]= useState(false);
+
+// Toggle pattern
+const toggle = () => setIsOpen(prev => !prev);
+
+return (
+  <div>
+    <button onClick={toggle}>
+      {isOpen ? "Close" : "Open"}
+    </button>
+    {isOpen && <Modal />}
+  </div>
+);
+```
+
+### String state — inputs
+
+```jsx
+const [name,  setName]  = useState("");
+const [email, setEmail] = useState("");
+
+return (
+  <form>
+    <input
+      value={name}
+      onChange={(e) => setName(e.target.value)}
+      placeholder="Your name"
+    />
+    <input
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      placeholder="Your email"
+    />
+    <p>Hello, {name || "stranger"}!</p>
+  </form>
+);
+```
+
+### Array state — lists
+
+```jsx
+const [todos, setTodos] = useState([]);
+const [tags,  setTags]  = useState(["react", "js"]);
+
+// ADD — spread existing + new item
+const addTodo = (text) => {
+  setTodos(prev => [...prev, { id: Date.now(), text, done: false }]);
+};
+
+// REMOVE — filter out the item
+const removeTodo = (id) => {
+  setTodos(prev => prev.filter(t => t.id !== id));
+};
+
+// UPDATE — map + spread the changed item
+const toggleTodo = (id) => {
+  setTodos(prev =>
+    prev.map(t => t.id === id ? { ...t, done: !t.done } : t)
+  );
+};
+```
+
+### Object state — forms and complex data
+
+```jsx
+const [user, setUser] = useState({
+  name:  "",
+  email: "",
+  age:   "",
+  role:  "viewer",
+});
+
+// Update one field — spread existing + override changed field
+const updateField = (field, value) => {
+  setUser(prev => ({ ...prev, [field]: value }));
+  //                           ^computed property key
+};
+
+return (
+  <form>
+    <input
+      value={user.name}
+      onChange={(e) => updateField("name", e.target.value)}
+    />
+    <input
+      value={user.email}
+      onChange={(e) => updateField("email", e.target.value)}
+    />
+    <select
+      value={user.role}
+      onChange={(e) => updateField("role", e.target.value)}
+    >
+      <option value="viewer">Viewer</option>
+      <option value="admin">Admin</option>
+    </select>
+  </form>
+);
+```
+
+---
+
+## Lazy initialisation — expensive initial values
+
+If your initial value is expensive to compute (reading from localStorage, heavy calculation), passing it as a function prevents it from running on every render:
+
+```jsx
+// BAD — runs JSON.parse on EVERY render, even though result only used once
+const [todos, setTodos] = useState(
+  JSON.parse(localStorage.getItem("todos")) || []
+);
+
+// GOOD — function only called on first render
+const [todos, setTodos] = useState(() => {
+  const saved = localStorage.getItem("todos");
+  return saved ? JSON.parse(saved) : [];
+});
+```
+
+The function form of `useState` — called **lazy initialisation** — is a small but important optimisation.
+
+---
+
+## Multiple state variables vs one object
+
+```jsx
+// Option 1 — separate state variables (preferred for unrelated data)
+const [name,    setName]    = useState("");
+const [age,     setAge]     = useState(0);
+const [loading, setLoading] = useState(false);
+const [error,   setError]   = useState(null);
+
+// Option 2 — one object (preferred when data is related / updated together)
+const [form, setForm] = useState({
+  username: "",
+  password: "",
+  confirm:  "",
+});
+```
+
+**Rule:** If two pieces of state always update together, put them in one object. If they're independent, keep them separate. Separate state is simpler to update; grouped state keeps related data together.
+
+---
+
+## State is per-instance — each component has its own
+
+```jsx
+// Three separate counters — each has its own count state
+// They don't share state — completely independent
+const App = () => (
+  <div>
+    <Counter />   {/* count: 0 */}
+    <Counter />   {/* count: 0 — different instance */}
+    <Counter />   {/* count: 0 — different instance */}
+  </div>
+);
+```
+
+This is a core feature — reusable components each maintain their own private state. Incrementing one counter doesn't affect the others.
+
+---
+
+## State is asynchronous — you can't read it immediately after setting
+
+```jsx
+const [count, setCount] = useState(0);
+
+const handleClick = () => {
+  setCount(count + 1);
+  console.log(count); // still 0! Not 1!
+  // State update is scheduled — the re-render hasn't happened yet
+  // count still holds the old value in this execution
+};
+```
+
+The new value is available on the **next render**, not immediately after calling the setter. If you need to work with the new value right away, store it in a variable first:
+
+```jsx
+const handleClick = () => {
+  const newCount = count + 1;
+  setCount(newCount);
+  console.log(newCount); // 1 — correct, because it's just a variable
+  sendAnalytics(newCount); // use the variable, not count
+};
+```
+
+---
+
+## Putting it all together — a real example
+
+```jsx
+const ShoppingCart = () => {
+  const [items,   setItems]   = useState([]);
+  const [coupon,  setCoupon]  = useState("");
+  const [applied, setApplied] = useState(false);
+
+  const addItem = (product) => {
+    setItems(prev => {
+      const exists = prev.find(i => i.id === product.id);
+      if (exists) {
+        // Already in cart — increment quantity
+        return prev.map(i =>
+          i.id === product.id
+            ? { ...i, qty: i.qty + 1 }
+            : i
+        );
+      }
+      // New item — add to cart
+      return [...prev, { ...product, qty: 1 }];
+    });
+  };
+
+  const removeItem = (id) => {
+    setItems(prev => prev.filter(i => i.id !== id));
+  };
+
+  const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
+  const discounted = applied ? total * 0.9 : total;
+
+  return (
+    <div>
+      <h2>Cart ({items.length} items)</h2>
+
+      {items.map(item => (
+        <div key={item.id}>
+          <span>{item.name} × {item.qty}</span>
+          <span>₹{item.price * item.qty}</span>
+          <button onClick={() => removeItem(item.id)}>Remove</button>
+        </div>
+      ))}
+
+      <div>
+        <input
+          value={coupon}
+          onChange={(e) => setCoupon(e.target.value)}
+          placeholder="Coupon code"
+        />
+        <button onClick={() => setApplied(coupon === "SAVE10")}>
+          Apply
+        </button>
+      </div>
+
+      <p>Total: ₹{discounted.toFixed(2)}</p>
+      {applied && <p>10% discount applied!</p>}
+    </div>
+  );
+};
+```
+
+Three state variables, all independent, all working together to power a real feature.
+
+---
+
+## Interview Questions
+
+**Q: What is the difference between `setState(value)` and `setState(prev => newValue)`?**
+The first form uses the current value from the closure — if React batches multiple updates, all of them read the same stale value and only the last one wins. The second form always receives the most recent state as `prev`, so batched updates chain correctly. Use the function form whenever new state depends on old state.
+
+**Q: Why can't you read new state immediately after calling the setter?**
+`setState` schedules a re-render — it doesn't update the variable synchronously. The component function hasn't run again yet, so `count` still holds the old value. The new value is only available on the next render. If you need the new value immediately in the same function, store it in a local variable before calling the setter.
+
+**Q: What is lazy initialisation in `useState`?**
+Passing a function to `useState` instead of a value: `useState(() => expensiveComputation())`. React only calls the function on the first render and ignores it after. Without this, the expression runs on every render — wasteful if it's something expensive like `JSON.parse(localStorage.getItem(...))`.
+
+**Q: When should you use multiple state variables vs one object?**
+Separate variables when state changes independently — simpler to update and read. One object when fields are related and often updated together (like a form). One key reason to prefer separate variables: updating one field in an object requires spreading the whole thing; separate variables update in isolation.
+
+---
+
+**Topic 10 done.** `useState` fully covered — the updater function, lazy init, all data types, async nature, and the per-instance model.
+
+**Topic 11 — Event Handling.** onClick, onChange, onSubmit — how events work in React, synthetic events, and common patterns. Say **"next"** to continue.
