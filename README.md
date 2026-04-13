@@ -3601,7 +3601,486 @@ Passing a function to `useState` instead of a value: `useState(() => expensiveCo
 Separate variables when state changes independently — simpler to update and read. One object when fields are related and often updated together (like a form). One key reason to prefer separate variables: updating one field in an object requires spreading the whole thing; separate variables update in isolation.
 
 ---
+# Topic 11 — Event Handling
 
-**Topic 10 done.** `useState` fully covered — the updater function, lazy init, all data types, async nature, and the per-instance model.
+## First principle: Events are how users talk to your app
 
-**Topic 11 — Event Handling.** onClick, onChange, onSubmit — how events work in React, synthetic events, and common patterns. Say **"next"** to continue.
+State is your app's memory. Events are what change that memory. Every click, keystroke, form submission, hover — these are events. React listens for them and lets you run code when they happen.
+
+React wraps browser events in its own system called **Synthetic Events** — but before that, understand what an event actually is.
+
+---
+
+## How event handling works in React vs the browser
+
+```jsx
+// Browser (vanilla JS) — you find the element, then attach a listener
+document.getElementById("btn").addEventListener("click", handleClick);
+
+// React — you attach the handler directly in JSX, declaratively
+<button onClick={handleClick}>Click me</button>
+```
+
+React uses **event delegation** under the hood — it attaches one single listener at the root of your app (not on every element). When you click a button, the event bubbles up to the root, React figures out which component it belongs to, and calls your handler. This is more efficient than attaching listeners to every single element.
+
+---
+
+## Synthetic Events — what they are
+
+React wraps the browser's native event in a **SyntheticEvent** — a cross-browser wrapper that normalises behaviour across Chrome, Firefox, Safari, etc.
+
+```jsx
+const Button = () => {
+  const handleClick = (event) => {
+    console.log(event);             // SyntheticEvent object
+    console.log(event.type);        // "click"
+    console.log(event.target);      // the DOM element clicked
+    console.log(event.target.value);// value (useful for inputs)
+    console.log(event.clientX);     // mouse X position
+    console.log(event.clientY);     // mouse Y position
+
+    event.preventDefault();         // prevent default browser behaviour
+    event.stopPropagation();        // stop event bubbling up
+  };
+
+  return <button onClick={handleClick}>Click me</button>;
+};
+```
+
+The Synthetic Event has the same API as the native browser event — `.preventDefault()`, `.stopPropagation()`, `.target`, `.currentTarget`. You use it identically.
+
+---
+
+## The three ways to attach handlers
+
+```jsx
+// Way 1 — inline arrow function
+<button onClick={() => console.log("clicked")}>Click</button>
+
+// Way 2 — reference to a function (no parentheses!)
+const handleClick = () => console.log("clicked");
+<button onClick={handleClick}>Click</button>
+
+// Way 3 — inline arrow that calls a function with arguments
+<button onClick={() => handleDelete(item.id)}>Delete</button>
+```
+
+The most critical mistake beginners make:
+
+```jsx
+// WRONG — calls the function immediately when component renders
+// handleClick() runs on render, not on click
+<button onClick={handleClick()}>Click</button>
+
+// CORRECT — passes the function reference, called on click
+<button onClick={handleClick}>Click</button>
+
+// CORRECT — arrow function that calls it on click
+<button onClick={() => handleClick()}>Click</button>
+```
+
+`onClick={handleClick}` — you're passing the function itself.
+`onClick={handleClick()}` — you're calling the function right now and passing its return value.
+
+---
+
+## Common events — the ones you'll use daily
+
+```jsx
+const EventExamples = () => {
+
+  // Mouse events
+  const handleClick      = () => console.log("clicked");
+  const handleDoubleClick= () => console.log("double clicked");
+  const handleMouseEnter = () => console.log("mouse entered");
+  const handleMouseLeave = () => console.log("mouse left");
+
+  // Keyboard events
+  const handleKeyDown = (e) => {
+    console.log(e.key);         // "Enter", "a", "ArrowUp" etc.
+    console.log(e.keyCode);     // 13 for Enter (older)
+    console.log(e.ctrlKey);     // true if Ctrl held
+    console.log(e.shiftKey);    // true if Shift held
+
+    if (e.key === "Enter")  handleSubmit();
+    if (e.key === "Escape") handleClose();
+  };
+
+  // Form events
+  const handleChange = (e) => console.log(e.target.value);
+  const handleSubmit = (e) => {
+    e.preventDefault(); // stop page refresh!
+    console.log("form submitted");
+  };
+  const handleFocus  = () => console.log("input focused");
+  const handleBlur   = () => console.log("input lost focus");
+
+  return (
+    <div>
+      <button
+        onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        Hover and click me
+      </button>
+
+      <input
+        onKeyDown={handleKeyDown}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+      />
+
+      <form onSubmit={handleSubmit}>
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  );
+};
+```
+
+---
+
+## The `onChange` event — how inputs work
+
+`onChange` is the most used event in React. It fires on every keystroke, giving you the current value via `e.target.value`.
+
+```jsx
+const Form = () => {
+  const [value, setValue] = useState("");
+
+  return (
+    <div>
+      <input
+        type="text"
+        value={value}                           // controlled — React owns the value
+        onChange={(e) => setValue(e.target.value)} // update on every keystroke
+      />
+      <p>You typed: {value}</p>
+      <p>Characters: {value.length}</p>
+    </div>
+  );
+};
+```
+
+Different input types — `e.target.value` works for most, but checkboxes use `e.target.checked`:
+
+```jsx
+const [text,     setText]     = useState("");
+const [checked,  setChecked]  = useState(false);
+const [selected, setSelected] = useState("option1");
+const [file,     setFile]     = useState(null);
+
+// Text, email, password, number, textarea
+<input value={text} onChange={(e) => setText(e.target.value)} />
+
+// Checkbox — use e.target.checked not e.target.value
+<input
+  type="checkbox"
+  checked={checked}
+  onChange={(e) => setChecked(e.target.checked)}
+/>
+
+// Select dropdown
+<select value={selected} onChange={(e) => setSelected(e.target.value)}>
+  <option value="option1">Option 1</option>
+  <option value="option2">Option 2</option>
+</select>
+
+// File input — uncontrolled, access via e.target.files
+<input type="file" onChange={(e) => setFile(e.target.files[0])} />
+```
+
+---
+
+## The `onSubmit` event — form submission
+
+Always call `e.preventDefault()` — otherwise the browser refreshes the page, losing all your state.
+
+```jsx
+const LoginForm = () => {
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [error,    setError]    = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault(); // ALWAYS — stops page refresh
+
+    // Validate
+    if (!email || !password) {
+      setError("Both fields are required");
+      return;
+    }
+
+    if (!email.includes("@")) {
+      setError("Invalid email");
+      return;
+    }
+
+    setError("");
+    console.log("Submitting:", { email, password });
+    // call API here
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+      />
+      <button type="submit">Login</button>
+    </form>
+  );
+};
+```
+
+---
+
+## Passing arguments to handlers — the right way
+
+When you're in a list and need to pass the item's ID to the handler:
+
+```jsx
+const TodoList = () => {
+  const [todos, setTodos] = useState([
+    { id: 1, text: "Learn React" },
+    { id: 2, text: "Build project" },
+    { id: 3, text: "Get hired" },
+  ]);
+
+  const handleDelete = (id) => {
+    setTodos(prev => prev.filter(t => t.id !== id));
+  };
+
+  const handleEdit = (id, newText) => {
+    setTodos(prev =>
+      prev.map(t => t.id === id ? { ...t, text: newText } : t)
+    );
+  };
+
+  return (
+    <ul>
+      {todos.map(todo => (
+        <li key={todo.id}>
+          {todo.text}
+          {/* Arrow function wraps the call — passes id as argument */}
+          <button onClick={() => handleDelete(todo.id)}>Delete</button>
+          <button onClick={() => handleEdit(todo.id, "Updated!")}>Edit</button>
+        </li>
+      ))}
+    </ul>
+  );
+};
+```
+
+---
+
+## Event bubbling — and when to stop it
+
+Events bubble up through the DOM — a click on a child fires the parent's click handler too.
+
+```jsx
+const Card = () => {
+  const handleCardClick  = () => console.log("Card clicked");
+  const handleButtonClick = (e) => {
+    e.stopPropagation(); // stop the click from reaching the card
+    console.log("Button clicked");
+  };
+
+  return (
+    // Clicking the card → logs "Card clicked"
+    <div onClick={handleCardClick} style={{ padding: "20px", border: "1px solid #ccc" }}>
+      <h3>Click the card or button</h3>
+
+      {/* Without stopPropagation: clicking button logs BOTH messages */}
+      {/* With stopPropagation: clicking button logs ONLY "Button clicked" */}
+      <button onClick={handleButtonClick}>Button inside card</button>
+    </div>
+  );
+};
+```
+
+**Real use case** — a clickable card that navigates somewhere, with a delete button inside that shouldn't trigger navigation:
+
+```jsx
+const ProductCard = ({ product, onNavigate, onDelete }) => {
+  return (
+    <div onClick={() => onNavigate(product.id)} className="card">
+      <h3>{product.name}</h3>
+      <p>₹{product.price}</p>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();    // don't navigate
+          onDelete(product.id);  // just delete
+        }}
+      >
+        Delete
+      </button>
+    </div>
+  );
+};
+```
+
+---
+
+## Keyboard event patterns — power user features
+
+```jsx
+const SearchBar = ({ onSearch }) => {
+  const [query, setQuery] = useState("");
+
+  const handleKeyDown = (e) => {
+    // Search on Enter
+    if (e.key === "Enter") {
+      onSearch(query);
+    }
+
+    // Clear on Escape
+    if (e.key === "Escape") {
+      setQuery("");
+    }
+
+    // Ctrl+K shortcut — often used for focus
+    if (e.ctrlKey && e.key === "k") {
+      e.preventDefault(); // prevent browser's default Ctrl+K behaviour
+      inputRef.current.focus();
+    }
+  };
+
+  const inputRef = useRef(null); // we'll cover this in Topic 18
+
+  return (
+    <input
+      ref={inputRef}
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
+      onKeyDown={handleKeyDown}
+      placeholder="Search... (Enter to search, Esc to clear)"
+    />
+  );
+};
+```
+
+---
+
+## Building a reusable event handler — the generic change handler
+
+For forms with many fields, instead of a separate `onChange` for each input, use a single generic handler:
+
+```jsx
+const RegistrationForm = () => {
+  const [form, setForm] = useState({
+    name:     "",
+    email:    "",
+    phone:    "",
+    password: "",
+    role:     "user",
+    agreed:   false,
+  });
+
+  // One handler for ALL inputs
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
+    setForm(prev => ({
+      ...prev,
+      // For checkbox use checked, for everything else use value
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Form data:", form);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* name attribute MUST match the state key */}
+      <input name="name"     value={form.name}     onChange={handleChange} placeholder="Name" />
+      <input name="email"    value={form.email}     onChange={handleChange} placeholder="Email" />
+      <input name="phone"    value={form.phone}     onChange={handleChange} placeholder="Phone" />
+      <input name="password" value={form.password}  onChange={handleChange} placeholder="Password" type="password" />
+
+      <select name="role" value={form.role} onChange={handleChange}>
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+      </select>
+
+      <label>
+        <input
+          type="checkbox"
+          name="agreed"
+          checked={form.agreed}
+          onChange={handleChange}
+        />
+        I agree to terms
+      </label>
+
+      <button type="submit" disabled={!form.agreed}>Register</button>
+    </form>
+  );
+};
+```
+
+`[name]: value` — computed property key from Topic 01. The `name` attribute on each input matches the state key. One handler, six inputs. This pattern scales to 20+ fields without adding a single new function.
+
+---
+
+## Visual mental model — event flow
+
+```
+User clicks button
+        ↓
+Browser fires native click event
+        ↓
+React intercepts at the root (event delegation)
+        ↓
+React creates SyntheticEvent wrapper
+        ↓
+React finds which component owns the handler
+        ↓
+Calls your onClick handler with SyntheticEvent
+        ↓
+You call setState inside the handler
+        ↓
+React schedules re-render
+        ↓
+Component re-renders with new state
+        ↓
+DOM updates
+```
+
+---
+
+## Interview Questions
+
+**Q: What is a Synthetic Event in React?**
+A SyntheticEvent is React's cross-browser wrapper around the native browser event. It normalises event behaviour across different browsers and provides the same API as native events (`.preventDefault()`, `.stopPropagation()`, `.target`). React creates it via event delegation — one listener at the root rather than listeners on every element.
+
+**Q: What is event delegation and why does React use it?**
+Event delegation means attaching one listener to a parent (the root) instead of individual listeners on every child element. When an event fires, it bubbles up to the root listener, which figures out the target. React uses this for performance — thousands of buttons share one listener instead of having thousands of individual listeners.
+
+**Q: Why do you need `e.preventDefault()` in form submit?**
+By default, submitting an HTML form causes the browser to make a GET/POST request and reload the page — losing all React state. `e.preventDefault()` stops the browser's default behaviour, letting you handle submission in JavaScript instead.
+
+**Q: What is the difference between `onClick={handleClick}` and `onClick={handleClick()}`?**
+`onClick={handleClick}` passes the function reference — React calls it when the click happens. `onClick={handleClick()}` calls the function immediately during render and passes its return value to `onClick`. This is almost always a bug — the function runs on every render instead of on click.
+
+---
+
+**Topic 11 done.** Event handling fully covered — synthetic events, all common events, bubbling, generic handlers, and the parentheses trap.
+
+**Topic 12 — Conditional Rendering.** `&&`, ternary, early returns, and when to use which pattern. The key to building dynamic UIs. Say **"next"** to continue.
