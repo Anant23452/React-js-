@@ -2743,6 +2743,3 @@ Presentational components only handle rendering — they receive data via props 
 
 ---
 
-**Topic 08 done.** You now know how to think in components, structure a UI, and avoid the classic mistakes.
-
-**Topic 09 — Props.** How data flows between components, prop types, default props, and all the patterns you need. Say **"next"** to continue.
