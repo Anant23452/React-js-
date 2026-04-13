@@ -2743,3 +2743,439 @@ Presentational components only handle rendering — they receive data via props 
 
 ---
 
+# Topic 09 — Props
+
+## First principle: Props are how components talk to each other
+
+React has one rule about data flow: **data goes one way — parent to child.** Props are the mechanism for that. A parent component passes data down to a child component through props, just like arguments to a function.
+
+```jsx
+// Props are just function arguments
+const greet = (name) => `Hello, ${name}`;
+greet("Ali"); // you pass data here
+
+// Same idea in React
+const Greeting = (props) => <h1>Hello, {props.name}</h1>;
+<Greeting name="Ali" /> // you pass data here
+```
+
+The child never modifies props. It just reads them and renders. This one-way flow is what makes React predictable — you always know where data comes from.
+
+---
+
+## How props work — the mechanics
+
+```jsx
+// Parent passes props like HTML attributes
+const App = () => {
+  return (
+    <UserCard
+      name="Ali"
+      age={25}
+      isAdmin={true}
+      scores={[90, 85, 92]}
+      address={{ city: "Delhi", country: "India" }}
+      onDelete={() => console.log("deleted")}
+    />
+  );
+};
+
+// Child receives ALL of them as one object
+const UserCard = (props) => {
+  console.log(props);
+  // {
+  //   name: "Ali",
+  //   age: 25,
+  //   isAdmin: true,
+  //   scores: [90, 85, 92],
+  //   address: { city: "Delhi", country: "India" },
+  //   onDelete: [Function]
+  // }
+
+  return <div>{props.name}</div>;
+};
+```
+
+Props is just an object. Every attribute you put on a component becomes a key in that object.
+
+---
+
+## Destructuring props — how everyone actually writes it
+
+```jsx
+// Nobody writes props.name, props.age everywhere
+// Destructure in the parameter — clean and readable
+
+const UserCard = ({ name, age, isAdmin, onDelete }) => {
+  return (
+    <div>
+      <h3>{name}</h3>
+      <p>Age: {age}</p>
+      {isAdmin && <span>Admin</span>}
+      <button onClick={onDelete}>Delete</button>
+    </div>
+  );
+};
+```
+
+Same as destructuring any object — you learned this in Topic 01.
+
+---
+
+## Default props — fallback values
+
+When a prop isn't passed, you want a sensible default instead of `undefined`.
+
+```jsx
+// Method 1 — default values in destructuring (preferred)
+const Button = ({
+  label    = "Click me",
+  variant  = "primary",
+  size     = "md",
+  disabled = false,
+}) => {
+  return (
+    <button
+      disabled={disabled}
+      className={`btn btn-${variant} btn-${size}`}
+    >
+      {label}
+    </button>
+  );
+};
+
+// All props optional — defaults kick in
+<Button />                          // "Click me", primary, md
+<Button label="Submit" />           // "Submit",   primary, md
+<Button label="Delete" variant="danger" size="sm" /> // all overridden
+```
+
+---
+
+## Prop types — the 5 types of props
+
+```jsx
+const Component = ({
+  // 1. String
+  title,
+
+  // 2. Number — use {} not quotes
+  count,
+
+  // 3. Boolean — just the name = true, no value needed
+  isActive,          // same as isActive={true}
+  isDisabled={false},// explicitly false
+
+  // 4. Array
+  items,
+
+  // 5. Object
+  user,
+
+  // 6. Function — callbacks/event handlers
+  onClick,
+  onSubmit,
+
+  // 7. JSX / React element
+  icon,
+  children,
+}) => { ... };
+
+// Usage
+<Component
+  title="Hello"              // string
+  count={42}                 // number
+  isActive                   // boolean true
+  items={["a", "b", "c"]}   // array
+  user={{ name: "Ali" }}    // object
+  onClick={() => {}}         // function
+  icon={<StarIcon />}        // JSX element
+>
+  <p>I am children</p>       // children prop
+</Component>
+```
+
+**A critical mistake:** passing numbers and booleans as strings
+
+```jsx
+// WRONG — these are strings "42" and "true"
+<Card count="42" isActive="true" />
+
+// CORRECT — use {} for anything that's not a string
+<Card count={42} isActive={true} />
+<Card count={42} isActive />      // shorthand for isActive={true}
+```
+
+---
+
+## The `children` prop — deep dive
+
+`children` is a special prop — it's whatever you put between a component's opening and closing tags.
+
+```jsx
+const Card = ({ title, children }) => (
+  <div className="card">
+    <h3>{title}</h3>
+    <div className="card-body">{children}</div>
+  </div>
+);
+
+// String children
+<Card title="Note">This is a simple text note</Card>
+
+// Element children
+<Card title="Profile">
+  <img src="avatar.jpg" alt="User" />
+  <p>Ali — Engineer</p>
+</Card>
+
+// Component children
+<Card title="Actions">
+  <Button label="Edit"   variant="primary" />
+  <Button label="Delete" variant="danger"  />
+</Card>
+
+// Multiple children — children becomes an array
+<Card title="Stats">
+  <Stat label="Posts"     value={42}    />
+  <Stat label="Followers" value={1204}  />
+  <Stat label="Following" value={389}   />
+</Card>
+```
+
+---
+
+## Prop drilling — the problem and awareness
+
+When data needs to go from a grandparent to a grandchild, you pass it through every level in between — this is called **prop drilling**.
+
+```jsx
+// Data starts here
+const App = () => {
+  const user = { name: "Ali", role: "admin" };
+  return <Dashboard user={user} />;
+};
+
+// Dashboard doesn't use user — just passes it down
+const Dashboard = ({ user }) => {
+  return <Sidebar user={user} />;
+};
+
+// Sidebar doesn't use user either — just passes it down
+const Sidebar = ({ user }) => {
+  return <UserProfile user={user} />;
+};
+
+// Finally used here — 3 levels deep
+const UserProfile = ({ user }) => {
+  return <p>{user.name} — {user.role}</p>;
+};
+```
+
+`Dashboard` and `Sidebar` are just middlemen — they don't need `user` but have to carry it. This gets painful at 4-5 levels deep. The solution is **Context** (Topic 19) — but first you need to recognise the problem.
+
+---
+
+## Passing functions as props — callbacks
+
+This is how children communicate back up to parents. The parent passes a function down, the child calls it.
+
+```jsx
+// Parent owns the state and the logic
+const TodoList = () => {
+  const [todos, setTodos] = useState([
+    { id: 1, text: "Learn React", done: false },
+    { id: 2, text: "Build app",   done: false },
+  ]);
+
+  // These functions live in the parent
+  const toggleTodo = (id) => {
+    setTodos(todos.map(t =>
+      t.id === id ? { ...t, done: !t.done } : t
+    ));
+  };
+
+  const deleteTodo = (id) => {
+    setTodos(todos.filter(t => t.id !== id));
+  };
+
+  return (
+    <ul>
+      {todos.map(todo => (
+        <TodoItem
+          key={todo.id}
+          todo={todo}
+          onToggle={toggleTodo}  // pass function down
+          onDelete={deleteTodo}  // pass function down
+        />
+      ))}
+    </ul>
+  );
+};
+
+// Child receives functions and calls them
+const TodoItem = ({ todo, onToggle, onDelete }) => {
+  return (
+    <li style={{ textDecoration: todo.done ? "line-through" : "none" }}>
+      <input
+        type="checkbox"
+        checked={todo.done}
+        onChange={() => onToggle(todo.id)}  // calls parent's function
+      />
+      {todo.text}
+      <button onClick={() => onDelete(todo.id)}>✕</button>
+    </li>
+  );
+};
+```
+
+The child never touches state directly. It just calls a function the parent gave it. Parent owns state, child reports events — clean separation.
+
+---
+
+## Spreading props — pass-through components
+
+When building wrapper components, you often want to pass all props through to the underlying element:
+
+```jsx
+// Input wrapper — adds label but passes everything else to <input>
+const FormInput = ({ label, id, error, ...inputProps }) => {
+  // label, id, error are used here
+  // ...inputProps captures: type, value, onChange, placeholder, disabled, etc.
+  return (
+    <div className="form-group">
+      <label htmlFor={id}>{label}</label>
+      <input id={id} {...inputProps} className={error ? "input-error" : ""} />
+      {error && <span className="error-msg">{error}</span>}
+    </div>
+  );
+};
+
+// Usage — all native input props work automatically
+<FormInput
+  label="Email"
+  id="email"
+  type="email"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+  placeholder="you@example.com"
+  error={errors.email}
+/>
+```
+
+`...inputProps` collects everything you didn't explicitly destructure and forwards it to `<input>`. This is how UI libraries like MUI and Chakra build their components.
+
+---
+
+## Computed props — derive values from props
+
+```jsx
+const Avatar = ({ name, size = 40, imageUrl }) => {
+  // Derive values from props — compute inside the component
+  const initials   = name.split(" ").map(w => w[0]).join("").toUpperCase();
+  const fontSize   = size * 0.4;
+  const bgColors   = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"];
+  const colorIndex = name.charCodeAt(0) % bgColors.length;
+  const bgColor    = bgColors[colorIndex];
+
+  const style = {
+    width:          size,
+    height:         size,
+    borderRadius:   "50%",
+    backgroundColor: bgColor,
+    display:        "flex",
+    alignItems:     "center",
+    justifyContent: "center",
+    fontSize:       fontSize,
+    fontWeight:     "600",
+    color:          "#fff",
+    overflow:       "hidden",
+  };
+
+  if (imageUrl) {
+    return <img src={imageUrl} alt={name} style={style} />;
+  }
+
+  return <div style={style}>{initials}</div>;
+};
+
+// Same component — two very different renders based on props
+<Avatar name="Ali Khan"   size={48} />             // shows "AK"
+<Avatar name="Sara Singh" size={32} imageUrl="..." />// shows image
+```
+
+---
+
+## Validating props with PropTypes
+
+For JS projects (not TypeScript), PropTypes gives runtime warnings in development:
+
+```jsx
+import PropTypes from "prop-types";
+
+const UserCard = ({ name, age, role, onDelete }) => {
+  return (
+    <div>
+      <h3>{name}</h3>
+      <p>{age} — {role}</p>
+      <button onClick={onDelete}>Delete</button>
+    </div>
+  );
+};
+
+UserCard.propTypes = {
+  name:     PropTypes.string.isRequired,
+  age:      PropTypes.number.isRequired,
+  role:     PropTypes.oneOf(["admin", "editor", "viewer"]),
+  onDelete: PropTypes.func,
+};
+
+UserCard.defaultProps = {
+  role:     "viewer",
+  onDelete: () => {},
+};
+```
+
+In modern projects with TypeScript, you skip PropTypes and define an interface instead — cleaner and catches errors at compile time, not runtime. We'll cover this in Phase 5.
+
+---
+
+## The immutability rule — never modify props
+
+```jsx
+// WRONG — never mutate props
+const UserCard = ({ user }) => {
+  user.name = "Modified"; // mutating props — NEVER do this
+  return <div>{user.name}</div>;
+};
+
+// CORRECT — read only, derive new values
+const UserCard = ({ user }) => {
+  const displayName = user.name.toUpperCase(); // derive, don't mutate
+  return <div>{displayName}</div>;
+};
+```
+
+Props belong to the parent. The child has no right to change them. If you need to modify something, derive a new value from the prop — don't touch the prop itself.
+
+---
+
+## Interview Questions
+
+**Q: What are props in React?**
+Props are inputs to a React component — a plain JavaScript object passed from parent to child. They're read-only: a child component can never modify its own props. This enforces unidirectional data flow — data moves from parent to child, and children communicate back up through callback functions passed as props.
+
+**Q: What is prop drilling and why is it a problem?**
+Prop drilling is passing props through multiple intermediate components that don't use them — just to get data to a deeply nested child. It's a problem because intermediate components get cluttered with props they don't care about, and changing the data shape requires updating every level. The solution is Context API or a state management library like Zustand.
+
+**Q: What is the difference between props and state?**
+Props are external — passed in by the parent, read-only inside the component. State is internal — owned and managed by the component itself, can be changed with a setter. Props configure a component from outside; state tracks what changes inside the component over time.
+
+**Q: How do children communicate with parents in React?**
+By calling callback functions passed down as props. The parent defines a function, passes it as a prop, and the child calls it with data when an event happens. This keeps state in the parent while letting children trigger changes — maintaining unidirectional data flow.
+
+---
+
+**Topic 09 done.** Props fully covered — passing data, callbacks, children, spreading, defaults, and the immutability rule.
+
+**Topic 10 — `useState`.** This is where React comes alive. State is what makes your UI dynamic — clicking, typing, toggling, loading. The most used hook in React. Say **"next"** to continue.
