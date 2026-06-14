@@ -4196,3 +4196,256 @@ function App() {
 ```
 
 Conditional rendering is one of the most important React concepts because it allows the UI to change dynamically according to the application's state and data.
+# Topic 13 — List Rendering (React)
+
+List Rendering means displaying multiple items from an array dynamically using the `map()` method.
+
+Instead of writing elements manually:
+
+```jsx
+<li>Apple</li>
+<li>Banana</li>
+<li>Mango</li>
+```
+
+We store data in an array and generate UI automatically.
+
+---
+
+## Basic Example
+
+```jsx
+function App() {
+  const fruits = ["Apple", "Banana", "Mango"];
+
+  return (
+    <ul>
+      {fruits.map((fruit) => (
+        <li>{fruit}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### Output
+
+```text
+• Apple
+• Banana
+• Mango
+```
+
+---
+
+## Why Use List Rendering?
+
+Without list rendering:
+
+```jsx
+<li>Apple</li>
+<li>Banana</li>
+<li>Mango</li>
+```
+
+With list rendering:
+
+```jsx
+const fruits = ["Apple", "Banana", "Mango"];
+
+{fruits.map((fruit) => (
+  <li>{fruit}</li>
+))}
+```
+
+Benefits:
+
+* Less code
+* Dynamic UI
+* Easy updates
+* Data-driven rendering
+
+---
+
+## Rendering Objects
+
+Arrays often contain objects.
+
+```jsx
+function App() {
+  const users = [
+    { id: 1, name: "Ankit" },
+    { id: 2, name: "Rahul" },
+    { id: 3, name: "Aman" }
+  ];
+
+  return (
+    <ul>
+      {users.map((user) => (
+        <li>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+Output:
+
+```text
+Ankit
+Rahul
+Aman
+```
+
+---
+
+## The Importance of `key`
+
+React requires a unique `key` for each list item.
+
+❌ Wrong:
+
+```jsx
+{
+  users.map((user) => (
+    <li>{user.name}</li>
+  ));
+}
+```
+
+✅ Correct:
+
+```jsx
+{
+  users.map((user) => (
+    <li key={user.id}>{user.name}</li>
+  ));
+}
+```
+
+### Why Key?
+
+React uses keys to:
+
+* Identify elements uniquely
+* Update UI efficiently
+* Prevent unnecessary re-renders
+
+---
+
+## Using Index as Key
+
+```jsx
+{
+  fruits.map((fruit, index) => (
+    <li key={index}>{fruit}</li>
+  ));
+}
+```
+
+Works, but avoid it when:
+
+* Items can be deleted
+* Items can be reordered
+* Items can be inserted in the middle
+
+Prefer a unique ID whenever possible.
+
+---
+
+## Rendering Components
+
+```jsx
+function User({ name }) {
+  return <h3>{name}</h3>;
+}
+
+function App() {
+  const users = ["Ankit", "Rahul", "Aman"];
+
+  return (
+    <>
+      {users.map((user, index) => (
+        <User key={index} name={user} />
+      ))}
+    </>
+  );
+}
+```
+
+---
+
+## List Rendering + Conditional Rendering
+
+```jsx
+function App() {
+  const users = [
+    { id: 1, name: "Ankit", active: true },
+    { id: 2, name: "Rahul", active: false }
+  ];
+
+  return (
+    <ul>
+      {users.map((user) =>
+        user.active ? (
+          <li key={user.id}>{user.name}</li>
+        ) : null
+      )}
+    </ul>
+  );
+}
+```
+
+Only active users are displayed.
+
+---
+
+# Quick Revision Notes 🚀
+
+### What is List Rendering?
+
+Displaying multiple elements from an array dynamically.
+
+### Method Used
+
+```jsx
+array.map()
+```
+
+### Basic Syntax
+
+```jsx
+{
+  items.map((item) => <Component />);
+}
+```
+
+### Key Prop
+
+```jsx
+key={uniqueId}
+```
+
+Used by React to identify list items uniquely.
+
+### Avoid
+
+```jsx
+key={index}
+```
+
+when list items can change order.
+
+### Common Use Cases
+
+* Product lists
+* User lists
+* Comments
+* Notifications
+* Todo apps
+
+### Interview Question
+
+**Q: Why does React need a key prop?**
+
+**Answer:** React uses keys to uniquely identify list items so it can efficiently update only the changed elements instead of re-rendering the entire list.
