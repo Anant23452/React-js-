@@ -4084,3 +4084,115 @@ By default, submitting an HTML form causes the browser to make a GET/POST reques
 **Topic 11 done.** Event handling fully covered — synthetic events, all common events, bubbling, generic handlers, and the parentheses trap.
 
 **Topic 12 — Conditional Rendering.** `&&`, ternary, early returns, and when to use which pattern. The key to building dynamic UIs. Say **"next"** to continue.
+If you're making notes for web development/React, add this section:
+
+# Conditional Rendering
+
+Conditional rendering means showing different UI elements based on a condition.
+
+## 1. Using `if` Statement
+
+```jsx
+function App() {
+  const isLoggedIn = true;
+
+  if (isLoggedIn) {
+    return <h1>Welcome User!</h1>;
+  }
+
+  return <h1>Please Login</h1>;
+}
+```
+
+**Output:**
+
+* `isLoggedIn = true` → Welcome User!
+* `isLoggedIn = false` → Please Login
+
+---
+
+## 2. Using Ternary Operator (`? :`)
+
+```jsx
+function App() {
+  const isLoggedIn = false;
+
+  return (
+    <h1>
+      {isLoggedIn ? "Welcome User!" : "Please Login"}
+    </h1>
+  );
+}
+```
+
+### Syntax
+
+```jsx
+condition ? trueValue : falseValue
+```
+
+---
+
+## 3. Using Logical AND (`&&`)
+
+Used when you want to display something only if a condition is true.
+
+```jsx
+function App() {
+  const showMessage = true;
+
+  return (
+    <div>
+      {showMessage && <p>Hello World!</p>}
+    </div>
+  );
+}
+```
+
+If `showMessage` is `false`, nothing is rendered.
+
+---
+
+## 4. Multiple Conditions
+
+```jsx
+function App() {
+  const marks = 85;
+
+  return (
+    <h1>
+      {marks >= 90
+        ? "Excellent"
+        : marks >= 75
+        ? "Good"
+        : "Needs Improvement"}
+    </h1>
+  );
+}
+```
+
+---
+
+## Why Conditional Rendering?
+
+* Show login/logout buttons.
+* Display loading spinners.
+* Show error messages.
+* Hide or display components based on user actions.
+* Control UI according to permissions or roles.
+
+### Example: Loading State
+
+```jsx
+function App() {
+  const loading = true;
+
+  return (
+    <div>
+      {loading ? <p>Loading...</p> : <p>Data Loaded</p>}
+    </div>
+  );
+}
+```
+
+Conditional rendering is one of the most important React concepts because it allows the UI to change dynamically according to the application's state and data.
