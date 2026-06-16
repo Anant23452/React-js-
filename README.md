@@ -4449,3 +4449,401 @@ when list items can change order.
 **Q: Why does React need a key prop?**
 
 **Answer:** React uses keys to uniquely identify list items so it can efficiently update only the changed elements instead of re-rendering the entire list.
+# Topic 14 — `useEffect` Hook (React)
+
+`useEffect` is a React Hook used to perform **side effects** in functional components.
+
+Examples of side effects:
+
+* Fetching API data
+* Updating document title
+* Setting timers (`setTimeout`, `setInterval`)
+* Adding event listeners
+* Accessing browser APIs
+
+---
+
+# Why useEffect?
+
+Before Hooks, lifecycle methods were used in class components:
+
+```jsx
+componentDidMount()
+componentDidUpdate()
+componentWillUnmount()
+```
+
+`useEffect` combines these functionalities in functional components.
+
+---
+
+# Basic Syntax
+
+```jsx
+import { useEffect } from "react";
+
+useEffect(() => {
+  // Side effect code
+}, []);
+```
+
+The first argument is a callback function.
+
+The second argument is the dependency array.
+
+---
+
+# 1. Run Only Once (Component Mount)
+
+```jsx
+import { useEffect } from "react";
+
+function App() {
+  useEffect(() => {
+    console.log("Component Mounted");
+  }, []);
+
+  return <h1>Hello</h1>;
+}
+```
+
+### What happens?
+
+```text
+Component renders
+↓
+useEffect runs once
+```
+
+Because dependency array is empty (`[]`).
+
+---
+
+# 2. Run On Every Render
+
+```jsx
+useEffect(() => {
+  console.log("Runs Every Render");
+});
+```
+
+No dependency array provided.
+
+### Happens when:
+
+* Component mounts
+* State changes
+* Props change
+
+---
+
+# 3. Run When Specific State Changes
+
+```jsx
+import { useState, useEffect } from "react";
+
+function App() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    console.log("Count Changed");
+  }, [count]);
+
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      {count}
+    </button>
+  );
+}
+```
+
+### Flow
+
+```text
+count changes
+↓
+useEffect runs
+```
+
+Only when `count` changes.
+
+---
+
+# Multiple Dependencies
+
+```jsx
+useEffect(() => {
+  console.log("Runs when count or name changes");
+}, [count, name]);
+```
+
+Runs if either dependency changes.
+
+---
+
+# Cleanup Function
+
+Used when component unmounts or before effect re-runs.
+
+```jsx
+useEffect(() => {
+  console.log("Subscribed");
+
+  return () => {
+    console.log("Unsubscribed");
+  };
+}, []);
+```
+
+---
+
+# Example: Timer Cleanup
+
+```jsx
+useEffect(() => {
+  const timer = setInterval(() => {
+    console.log("Running");
+  }, 1000);
+
+  return () => {
+    clearInterval(timer);
+  };
+}, []);
+```
+
+Why cleanup?
+
+Without cleanup:
+
+* Memory leaks
+* Multiple timers
+* Performance issues
+
+---
+
+# Fetching API Data
+
+```jsx
+import { useState, useEffect } from "react";
+
+function App() {
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    fetch("https://jsonplaceholder.typicode.com/users")
+      .then((res) => res.json())
+      .then((data) => setUsers(data));
+  }, []);
+
+  return (
+    <div>
+      {users.map((user) => (
+        <p key={user.id}>{user.name}</p>
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+# Common Mistake #1
+
+```jsx
+useEffect(() => {
+  setCount(count + 1);
+});
+```
+
+This creates an infinite loop.
+
+### Why?
+
+```text
+Render
+↓
+useEffect
+↓
+setCount
+↓
+Render again
+↓
+useEffect again
+↓
+Infinite loop
+```
+
+---
+
+# Common Mistake #2
+
+Wrong dependency array:
+
+```jsx
+useEffect(() => {
+  fetchData();
+}, []);
+```
+
+If `fetchData` depends on changing values, effect may use old values.
+
+Always include required dependencies.
+
+---
+
+# Dependency Array Cheat Sheet
+
+## Run Once
+
+```jsx
+useEffect(() => {}, []);
+```
+
+---
+
+## Run Every Render
+
+```jsx
+useEffect(() => {});
+```
+
+---
+
+## Run When Count Changes
+
+```jsx
+useEffect(() => {}, [count]);
+```
+
+---
+
+## Run When Count or Name Changes
+
+```jsx
+useEffect(() => {}, [count, name]);
+```
+
+---
+
+# Real-Life Use Cases
+
+### API Calls
+
+```jsx
+useEffect(() => {
+  fetchData();
+}, []);
+```
+
+### Document Title
+
+```jsx
+useEffect(() => {
+  document.title = `Count: ${count}`;
+}, [count]);
+```
+
+### Event Listener
+
+```jsx
+useEffect(() => {
+  window.addEventListener("resize", handleResize);
+
+  return () => {
+    window.removeEventListener("resize", handleResize);
+  };
+}, []);
+```
+
+### Timer
+
+```jsx
+useEffect(() => {
+  const timer = setInterval(() => {}, 1000);
+
+  return () => clearInterval(timer);
+}, []);
+```
+
+---
+
+# Execution Order
+
+```text
+1. Component Render
+2. DOM Updated
+3. useEffect Runs
+```
+
+Unlike rendering, `useEffect` runs after React updates the DOM.
+
+---
+
+# Quick Revision Notes 🚀
+
+### Purpose
+
+Perform side effects in React components.
+
+### Syntax
+
+```jsx
+useEffect(() => {
+  // effect
+}, [dependencies]);
+```
+
+### Dependency Array
+
+| Dependency      | Effect Runs         |
+| --------------- | ------------------- |
+| No array        | Every render        |
+| `[]`            | Once after mount    |
+| `[count]`       | When count changes  |
+| `[count, name]` | When either changes |
+
+### Cleanup
+
+```jsx
+return () => {
+  // cleanup code
+};
+```
+
+### Common Uses
+
+* API calls
+* Timers
+* Event listeners
+* Updating page title
+* Subscriptions
+
+### Interview Question
+
+**Q: What is the difference between `useEffect(() => {}, [])` and `useEffect(() => {})`?**
+
+**Answer:**
+
+* `useEffect(() => {}, [])` → Runs only once after component mounts.
+* `useEffect(() => {})` → Runs after every render.
+
+---
+
+# Revision Kit 📝
+
+**Pattern:** Side Effects Management
+
+**Core Idea:** Execute code after rendering and control when it runs using dependencies.
+
+**Most Important Rules:**
+
+1. `[]` → Run once.
+2. No dependency array → Run every render.
+3. `[dep]` → Run when dependency changes.
+4. Cleanup prevents memory leaks.
+
+**Common Mistakes:**
+
+* Forgetting cleanup for timers/listeners.
+* Causing infinite loops with state updates.
+* Missing dependencies in dependency array.
