@@ -4847,3 +4847,259 @@ return () => {
 * Forgetting cleanup for timers/listeners.
 * Causing infinite loops with state updates.
 * Missing dependencies in dependency array.
+# React Component Lifecycle
+
+A React component goes through **3 main phases**:
+
+```text
+Mounting  →  Updating  →  Unmounting
+```
+
+## 1. Mounting (Component Created)
+
+This happens when the component is added to the screen for the first time.
+
+```jsx
+function App() {
+  useEffect(() => {
+    console.log("Component Mounted");
+  }, []);
+
+  return <h1>Hello</h1>;
+}
+```
+
+### Flow
+
+```text
+Component Created
+       ↓
+Render JSX
+       ↓
+Shown on Screen
+       ↓
+useEffect Runs
+```
+
+### Example
+
+```jsx
+useEffect(() => {
+  console.log("Mounted");
+}, []);
+```
+
+`[]` means run only once after the first render.
+
+---
+
+## 2. Updating (Component Re-renders)
+
+Occurs when:
+
+* State changes
+* Props change
+
+### Example
+
+```jsx
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    console.log("Count Updated:", count);
+  }, [count]);
+
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      {count}
+    </button>
+  );
+}
+```
+
+### Flow
+
+```text
+State/Props Change
+        ↓
+Component Re-renders
+        ↓
+DOM Updates
+        ↓
+useEffect Runs
+```
+
+Every time `count` changes, the effect runs.
+
+---
+
+## 3. Unmounting (Component Removed)
+
+Occurs when the component is removed from the screen.
+
+### Example
+
+```jsx
+useEffect(() => {
+  console.log("Mounted");
+
+  return () => {
+    console.log("Unmounted");
+  };
+}, []);
+```
+
+The function returned by `useEffect` is called the **cleanup function**.
+
+### Flow
+
+```text
+Component Removed
+        ↓
+Cleanup Function Runs
+```
+
+Used for:
+
+* Clearing timers
+* Removing event listeners
+* Closing connections
+
+---
+
+# Lifecycle using useEffect
+
+## Mount Only
+
+```jsx
+useEffect(() => {
+  console.log("Mount");
+}, []);
+```
+
+Runs once.
+
+---
+
+## Update Only
+
+```jsx
+useEffect(() => {
+  console.log("Count changed");
+}, [count]);
+```
+
+Runs whenever `count` changes.
+
+---
+
+## Every Render
+
+```jsx
+useEffect(() => {
+  console.log("Runs on every render");
+});
+```
+
+No dependency array.
+
+---
+
+## Unmount
+
+```jsx
+useEffect(() => {
+  return () => {
+    console.log("Cleanup");
+  };
+}, []);
+```
+
+Runs when component is removed.
+
+---
+
+# Complete Lifecycle Example
+
+```jsx
+import { useState, useEffect } from "react";
+
+function Demo() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    console.log("Mounted");
+
+    return () => {
+      console.log("Unmounted");
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log("Count Updated:", count);
+  }, [count]);
+
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      Count: {count}
+    </button>
+  );
+}
+```
+
+### Output Flow
+
+```text
+Page Load
+→ Mounted
+→ Count Updated: 0
+
+Click Button
+→ Count Updated: 1
+
+Click Again
+→ Count Updated: 2
+
+Component Removed
+→ Unmounted
+```
+
+---
+
+# React Interview Revision
+
+### Component Lifecycle
+
+**Mounting**
+
+* Component created and added to DOM.
+* `useEffect(() => {}, [])`
+
+**Updating**
+
+* State or props change.
+* `useEffect(() => {}, [dependency])`
+
+**Unmounting**
+
+* Component removed from DOM.
+* Cleanup function runs.
+
+### Modern React
+
+Class component methods:
+
+```jsx
+componentDidMount()
+componentDidUpdate()
+componentWillUnmount()
+```
+
+Functional components use:
+
+```jsx
+useEffect()
+```
+
+because it can handle all lifecycle phases in one place.
